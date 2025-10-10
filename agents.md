@@ -13,36 +13,40 @@
 - Optional lint sweep: `npm run lint`.
 
 ## Feature Map
-- **Layout**: `ReturnProLayout` wraps the app with sidebar navigation, search bar, and profile controls.
-- **Dashboard Header**: `MetricCard` tiles show Enterprise Value, Terminal Value (raw + PV), and current WACC.
+- **Layout**: `ReturnProLayout` wraps the app with sidebar navigation, search bar, profile controls, and a quick link to the Carlos Master Dash v1.3 Power BI workspace.
+- **Dashboard Header**: `MetricCard` tiles show Enterprise Value, Terminal Value (raw + PV), and current WACC, with hoverable info tooltips on the valuation KPIs.
+- **Scenario Summary**: `ScenarioSummary` renders the EBITDA Outlook with years as column headers and highlights historical values in red.
+- **Scenarios**: `src/constants/scenarios.ts` defines the three hardcoded iFReturns presets (Conservative 25% / 3%, Base 20% / 4%, Optimistic 18% / 5%) that share the same EBITDA seed data.
 - **Inputs**: `InputPanel` lists editable EBITDA rows (historical in red) and sliders/number inputs for WACC, Perpetual Growth, and Corporate Tax.
 - **Visuals**: `VisualizationPanel` renders a `ComposedChart` (EBITDA, Tax, FCF, Present Value) and a `PieChart` splitting projections vs terminal PV.
 - **Table**: `DetailedAnalysisTable` provides row-level calculations with tax, FCF, discount factor, and present value, plus terminal value and enterprise value summary rows.
 - **Engine**: `useDCFCalculation` debounces form state and invokes `calculateDCF`, enforcing WACC > growth and correct tax treatment for losses.
 
 ## Baseline Calculation (default seed data)
-Derived from `DEFAULT_EBITDA_DATA` with 30% WACC, 4% growth, and 21% corporate tax.
+Derived from the Base iFReturns scenario with 20% WACC, 4% growth, and 21% corporate tax.
 
 | Year | EBITDA (€) | Corporate Tax (€) | Free Cash Flow (€) | Discount Factor | Present Value (€) |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| 2023 | -1,274,610 | 0 | -1,274,610 | 0.769 | -980,469 |
-| 2024 | -885,664 | 0 | -885,664 | 0.592 | -524,062 |
-| 2025 | 29,279 | 6,149 | 23,130 | 0.455 | 10,528 |
-| 2026 | 1,715,988 | 360,357 | 1,355,631 | 0.350 | 474,644 |
-| 2027 | 3,618,470 | 759,879 | 2,858,591 | 0.269 | 769,902 |
-| 2028 | 7,840,841 | 1,646,577 | 6,194,264 | 0.207 | 1,283,304 |
-| 2029 | 15,634,053 | 3,283,151 | 12,350,902 | 0.159 | 1,968,318 |
+| 2023 | -1,274,610 | 0 | -1,274,610 | 0.833 | -1,062,175 |
+| 2024 | -885,664 | 0 | -885,664 | 0.694 | -615,044 |
+| 2025 | 29,279 | 6,149 | 23,130 | 0.579 | 13,386 |
+| 2026 | 1,715,988 | 360,357 | 1,355,631 | 0.482 | 653,757 |
+| 2027 | 3,618,470 | 759,879 | 2,858,591 | 0.402 | 1,148,804 |
+| 2028 | 7,840,841 | 1,646,577 | 6,194,264 | 0.335 | 2,074,447 |
+| 2029 | 15,634,053 | 3,283,151 | 12,350,902 | 0.279 | 3,446,910 |
 
-- PV of projected cash flows: **€3,002,165**
-- Terminal value: **€49,403,607**
-- PV of terminal value: **€7,873,271**
-- Enterprise value: **€10,875,436**
+- PV of projected cash flows: **€5,660,084**
+- Terminal value: **€80,280,862**
+- PV of terminal value: **€22,404,915**
+- Enterprise value: **€28,064,999**
 
 Agents should spot-check these values after any change to calculations or default data.
 
 ## Manual QA Checklist
 - **Load & Layout**
   - Start dev server; ensure sidebar, header, and dashboard render without console errors.
+  - Confirm the scenario selector lists the three iFReturns presets (Conservative, Base, Optimistic) and switching between them updates metrics.
+  - Test the Carlos Master Dash v1.3 sidebar link opens the shared Power BI dashboard in a new tab/window.
   - Confirm historical EBITDA rows (≤2024) are styled in the red “Historical” state.
 - **Input Behaviour**
   - Change numeric input for a historical year; verify immediate update in header metrics, chart, and table after short debounce (~180 ms).
@@ -50,6 +54,7 @@ Agents should spot-check these values after any change to calculations or defaul
   - Use sliders to adjust WACC, growth, and tax; confirm number input and trailing percentage text stay synchronized.
   - Attempt to set WACC ≤ growth. Expect calculation error (component will throw). Capture any ungraceful UX—currently no explicit guardrail in UI.
 - **Chart & Table Verification**
+  - Verify the EBITDA Outlook table renders years as column headers with historical columns in red.
   - Hover bars/line to confirm tooltip currency formatting and labels.
   - Check pie chart percentages sum to ~100% and labels remain legible.
   - Validate table formatting: negative taxes wrapped in parentheses, discount factor precision (3 decimals), enterprise value row styled in primary color.
@@ -62,6 +67,7 @@ Agents should spot-check these values after any change to calculations or defaul
 - **Accessibility**
   - Verify inputs have descriptive labels and helper text (`aria-describedby` on sliders/numbers).
   - Check keyboard focus order (tabbing through EBITDA list, sliders, and header buttons).
+  - Ensure the KPI info buttons are reachable via keyboard and display tooltip text on focus.
   - Confirm color contrasts for historical vs projected rows.
 
 ## Regression Watchouts

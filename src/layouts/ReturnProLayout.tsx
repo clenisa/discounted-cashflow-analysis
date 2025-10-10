@@ -1,5 +1,5 @@
 import type { PropsWithChildren, ReactNode } from 'react';
-import { Calculator, Database, HelpCircle, Search, Settings } from 'lucide-react';
+import { Calculator, Database, ExternalLink, HelpCircle, Search, Settings } from 'lucide-react';
 import { NavItem } from '@/components/navigation/NavItem';
 
 interface ReturnProLayoutProps extends PropsWithChildren {
@@ -47,7 +47,16 @@ export const ReturnProLayout = ({ children, headerContent, activeSection, onSect
           </NavItem>
         ))}
       </nav>
-      <div className="px-6 pb-6">
+      <div className="space-y-2 px-6 pb-6">
+        <a
+          href="https://app.powerbi.com/links/iEtDKMnswN?ctid=afcc02f9-7b18-412a-8981-1fc01424da49&pbi_source=linkShare&bookmarkGuid=6ee0d9f2-0cc0-4290-807e-ad0aefd67a33"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex w-full items-center justify-between rounded-lg bg-primary/10 px-4 py-3 text-sm font-medium text-primary transition-colors hover:bg-primary/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
+        >
+          <span>Carlos Master Dash v1.3</span>
+          <ExternalLink size={18} aria-hidden />
+        </a>
         <button
           type="button"
           className="flex w-full items-center justify-between rounded-lg bg-slate-800 px-4 py-3 text-sm text-slate-200 hover:bg-slate-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40"

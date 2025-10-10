@@ -15,6 +15,7 @@ export const DashboardHeader = ({ results, parameters }: DashboardHeaderProps) =
       format="currency"
       icon={<Banknote className="h-6 w-6 text-primary" aria-hidden />}
       color="blue"
+      info="Present value of projected free cash flows plus the discounted terminal value."
     />
     <MetricCard
       title="Terminal Value"
@@ -22,6 +23,7 @@ export const DashboardHeader = ({ results, parameters }: DashboardHeaderProps) =
       format="currency"
       icon={<Binary className="h-6 w-6 text-success" aria-hidden />}
       color="green"
+      info="Estimated value of the business beyond the forecast period using the Gordon Growth formula."
     />
     <MetricCard
       title="Terminal Value PV"
@@ -29,6 +31,7 @@ export const DashboardHeader = ({ results, parameters }: DashboardHeaderProps) =
       format="currency"
       icon={<Calculator className="h-6 w-6 text-purple" aria-hidden />}
       color="purple"
+      info="Terminal value discounted back to the present using the weighted average cost of capital."
     />
     <MetricCard
       title="Weighted Average Cost of Capital"

@@ -1,30 +1,51 @@
 import type { PropsWithChildren, ReactNode } from 'react';
-import { BarChart3, Calculator, Database, FileBarChart, HelpCircle, Search, Settings } from 'lucide-react';
+import { Calculator, Database, HelpCircle, Search, Settings } from 'lucide-react';
 import { NavItem } from '@/components/navigation/NavItem';
 
 interface ReturnProLayoutProps extends PropsWithChildren {
   headerContent?: ReactNode;
+  activeSection: ReturnProSection;
+  onSectionChange?: (section: ReturnProSection) => void;
 }
 
-export const ReturnProLayout = ({ children, headerContent }: ReturnProLayoutProps) => (
+const sections: Array<{ id: ReturnProSection; label: string; icon: ReactNode }> = [
+  {
+    id: 'dcf',
+    label: 'DCF Calculator',
+    icon: <Calculator size={18} />
+  },
+  {
+    id: 'financial-data',
+    label: 'Financial Data',
+    icon: <Database size={18} />
+  }
+];
+
+export type ReturnProSection = 'dcf' | 'financial-data';
+
+export const ReturnProLayout = ({ children, headerContent, activeSection, onSectionChange }: ReturnProLayoutProps) => (
   <div className="flex h-screen bg-slate-50 text-slate-900">
     <aside className="hidden w-64 flex-col bg-slate-900 text-white lg:flex">
-      <div className="flex items-center gap-3 px-6 py-6 border-b border-slate-800">
-        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary text-base font-bold">
+      <div className="flex items-center gap-3 border-b border-slate-800 px-6 py-6">
+        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary text-base font-bold text-white">
           R1
         </div>
         <div>
           <p className="text-sm uppercase tracking-wide text-slate-300">ReturnPro</p>
-          <p className="text-lg font-semibold">Analytics</p>
+          <p className="text-lg font-semibold text-white">Analytics</p>
         </div>
       </div>
-      <nav className="flex-1 py-6 space-y-1">
-        <NavItem icon={<Calculator size={18} />} active>
-          DCF Calculator
-        </NavItem>
-        <NavItem icon={<BarChart3 size={18} />}>Valuation Models</NavItem>
-        <NavItem icon={<Database size={18} />}>Financial Data</NavItem>
-        <NavItem icon={<FileBarChart size={18} />}>Reports</NavItem>
+      <nav className="flex-1 space-y-1 py-6">
+        {sections.map((section) => (
+          <NavItem
+            key={section.id}
+            icon={section.icon}
+            active={section.id === activeSection}
+            onClick={() => onSectionChange?.(section.id)}
+          >
+            {section.label}
+          </NavItem>
+        ))}
       </nav>
       <div className="px-6 pb-6">
         <button
@@ -37,15 +58,34 @@ export const ReturnProLayout = ({ children, headerContent }: ReturnProLayoutProp
       </div>
     </aside>
     <div className="flex flex-1 flex-col overflow-hidden">
-      <header className="flex items-center justify-between border-b border-slate-200 bg-white px-6 py-4 shadow-sm">
+      <header className="flex items-center justify-between border-b border-slate-200 bg-white px-4 py-3 shadow-sm sm:px-6 sm:py-4">
         <div className="flex items-center gap-3">
-          <div className="hidden md:flex items-center gap-2 rounded-full border border-slate-200 bg-slate-100 px-3 py-2 text-sm text-slate-500 focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20">
+          <div className="hidden items-center gap-2 rounded-full border border-slate-200 bg-slate-100 px-3 py-2 text-sm text-slate-500 focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20 md:flex">
             <Search size={16} className="text-slate-400" />
             <input
               type="search"
               placeholder="Search models, companies..."
               className="bg-transparent outline-none placeholder:text-slate-400"
             />
+          </div>
+          <div className="md:hidden">
+            <label htmlFor="mobile-section-select" className="sr-only">
+              Select workspace section
+            </label>
+            <div className="relative">
+              <select
+                id="mobile-section-select"
+                value={activeSection}
+                onChange={(event) => onSectionChange?.(event.target.value as ReturnProSection)}
+                className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 shadow-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+              >
+                {sections.map((section) => (
+                  <option key={section.id} value={section.id}>
+                    {section.label}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
           {headerContent}
         </div>
@@ -58,12 +98,12 @@ export const ReturnProLayout = ({ children, headerContent }: ReturnProLayoutProp
             <Settings size={18} />
           </button>
           <div className="flex items-center gap-3">
-            <div className="hidden md:block text-right">
-              <p className="text-sm font-semibold text-slate-800">Alex Morgan</p>
-              <p className="text-xs text-slate-500">Chief Financial Officer</p>
+            <div className="hidden text-right md:block">
+              <p className="text-sm font-semibold text-slate-800">Som Mukherjee</p>
+              <p className="text-xs text-slate-500">Chief Financial Advisor</p>
             </div>
             <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary">
-              AM
+              SM
             </div>
           </div>
         </div>

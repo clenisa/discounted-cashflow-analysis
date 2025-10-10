@@ -11,6 +11,8 @@ import {
   XAxis,
   YAxis
 } from 'recharts';
+import type { TooltipProps } from 'recharts';
+import type { NameType, ValueType } from 'recharts/types/component/DefaultTooltipContent';
 import { Card } from '@/components/common/Card';
 import type { DCFParameters, DCFResults } from '@/types/dcf';
 import { formatCurrency, formatCurrencyShort, formatPercentage } from '@/utils/format';
@@ -22,17 +24,19 @@ interface VisualizationPanelProps {
 
 const PIE_COLORS = ['#4F46E5', '#10B981'];
 
-const buildValueBridgeData = (results: DCFResults) => {
+type ValueBridgeDatum = {
+  name: string;
+  start: number;
+  increase: number;
+  decrease: number;
+  total: number;
+  tooltipValue: number;
+  cumulative: number;
+};
+
+const buildValueBridgeData = (results: DCFResults): ValueBridgeDatum[] => {
   // Build a cumulative enterprise value bridge where each bar starts where the previous bar ended.
-  const bridgeData: Array<{
-    name: string;
-    start: number;
-    increase: number;
-    decrease: number;
-    total: number;
-    tooltipValue: number;
-    cumulative: number;
-  }> = [];
+  const bridgeData: ValueBridgeDatum[] = [];
 
   let cumulativeValue = 0;
 
@@ -94,6 +98,60 @@ const buildValueBridgeData = (results: DCFResults) => {
   return bridgeData;
 };
 
+const renderValueBridgeTooltip = ({
+  active,
+  payload,
+  label
+}: TooltipProps<ValueType, NameType>) => {
+  if (!active || !payload || payload.length === 0 || typeof label !== 'string') {
+    return null;
+  }
+
+  const entries = new Map<string, number>();
+
+  payload.forEach((entry) => {
+    const datum = entry.payload as ValueBridgeDatum | undefined;
+    const datumName = datum?.name ?? '';
+
+    if (!datum || datumName === '' || entries.has(datumName)) {
+      return;
+    }
+
+    const value =
+      typeof datum.tooltipValue === 'number'
+        ? datum.tooltipValue
+        : typeof entry.value === 'number'
+          ? entry.value
+          : undefined;
+
+    if (typeof value === 'number') {
+      entries.set(datumName, Math.abs(value));
+    }
+  });
+
+  if (entries.size === 0) {
+    return null;
+  }
+
+  return (
+    <div
+      style={{
+        backgroundColor: '#F8FAFC',
+        border: '1px solid #E2E8F0',
+        borderRadius: '6px',
+        padding: '8px 12px'
+      }}
+    >
+      <div className="text-sm font-semibold text-slate-900">{label}</div>
+      {Array.from(entries.entries()).map(([name, value]) => (
+        <div key={name} className="text-xs text-slate-600">
+          {name}: {formatCurrency(value)}
+        </div>
+      ))}
+    </div>
+  );
+};
+
 export const VisualizationPanel = ({ results, parameters }: VisualizationPanelProps) => (
   <div className="space-y-6">
     <Card
@@ -118,20 +176,8 @@ export const VisualizationPanel = ({ results, parameters }: VisualizationPanelPr
             />
             <YAxis stroke="#64748B" tickFormatter={(value) => formatCurrencyShort(value)} tick={{ fontSize: 12 }} />
             <Tooltip
-              formatter={(value, name, { payload }) => {
-                if (!payload || typeof payload.name !== 'string' || payload.name.trim() === '') {
-                  return null;
-                }
-                const displayValue =
-                  payload.name.includes('PV') ||
-                  payload.name.includes('Value') ||
-                  payload.name.includes('Enterprise')
-                    ? payload.total ?? payload.tooltipValue
-                    : payload.tooltipValue;
-                return [formatCurrency(Math.abs(displayValue || 0)), payload.name];
-              }}
-              labelFormatter={(label: string) => label}
-              contentStyle={{ backgroundColor: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: '6px' }}
+              content={renderValueBridgeTooltip}
+              wrapperStyle={{ outline: 'none' }}
             />
             <Legend />
             <Bar dataKey="start" stackId="waterfall" fill="transparent" legendType="none" />

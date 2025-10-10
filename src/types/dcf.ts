@@ -8,6 +8,13 @@ export interface DCFParameters {
   corporateTaxRate: number;
 }
 
+export interface DCFDataSet {
+  id: string;
+  label: string;
+  ebitdaData: EBITDAData;
+  parameters: DCFParameters;
+}
+
 export interface PresentValueBreakdown {
   year: number;
   ebitda: number;

@@ -4,7 +4,6 @@ import {
   Cell,
   ComposedChart,
   Legend,
-  Line,
   Pie,
   PieChart,
   ResponsiveContainer,
@@ -23,24 +22,80 @@ interface VisualizationPanelProps {
 
 const PIE_COLORS = ['#4F46E5', '#10B981'];
 
+const buildValueBridgeData = (results: DCFResults) => {
+  const totals = results.presentValues.reduce(
+    (accumulator, row) => {
+      accumulator.ebitda += row.ebitda;
+      accumulator.tax += row.tax;
+      accumulator.fcf += row.fcf;
+      return accumulator;
+    },
+    { ebitda: 0, tax: 0, fcf: 0 }
+  );
+
+  const discountImpact = results.projectionsPV - totals.fcf;
+
+  const steps = [
+    { name: 'Aggregate EBITDA', value: totals.ebitda },
+    { name: 'Corporate Tax', value: -totals.tax },
+    { name: 'Discounting Impact', value: discountImpact },
+    { name: 'Terminal Value PV', value: results.terminalValuePV }
+  ];
+
+  const bridgeData: Array<{
+    name: string;
+    start: number;
+    increase: number;
+    decrease: number;
+    total: number;
+    tooltipValue: number;
+  }> = [];
+
+  let runningTotal = 0;
+
+  steps.forEach((step) => {
+    const start = runningTotal;
+    runningTotal += step.value;
+    bridgeData.push({
+      name: step.name,
+      start,
+      increase: step.value >= 0 ? step.value : 0,
+      decrease: step.value < 0 ? Math.abs(step.value) : 0,
+      total: 0,
+      tooltipValue: step.value
+    });
+  });
+
+  bridgeData.push({
+    name: 'Enterprise Value',
+    start: 0,
+    increase: 0,
+    decrease: 0,
+    total: results.enterpriseValue,
+    tooltipValue: results.enterpriseValue
+  });
+
+  return bridgeData;
+};
+
 export const VisualizationPanel = ({ results, parameters }: VisualizationPanelProps) => (
   <div className="space-y-6">
-    <Card title="Cash Flow Analysis" subtitle="EBITDA, tax, free cash flow, and present value by year">
+    <Card title="Value Bridge" subtitle="Stepwise reconciliation from EBITDA to enterprise value">
       <div className="h-80 w-full">
         <ResponsiveContainer width="100%" height="100%">
-          <ComposedChart data={results.presentValues}>
+          <ComposedChart data={buildValueBridgeData(results)}>
             <CartesianGrid strokeDasharray="4 4" stroke="#CBD5F5" />
-            <XAxis dataKey="year" stroke="#64748B" />
+            <XAxis dataKey="name" stroke="#64748B" />
             <YAxis stroke="#64748B" tickFormatter={(value) => formatCurrencyShort(value)} />
             <Tooltip
-              formatter={(value: number) => formatCurrency(value)}
-              labelFormatter={(label: number) => `Year ${label}`}
+              formatter={(_, __, { payload }) => formatCurrency(payload?.tooltipValue ?? 0)}
+              labelFormatter={(label: string) => label}
             />
             <Legend />
-            <Bar dataKey="ebitda" fill="#4F46E5" name="EBITDA" />
-            <Bar dataKey="tax" fill="#EF4444" name="Corporate Tax" />
-            <Bar dataKey="fcf" fill="#10B981" name="Free Cash Flow" />
-            <Line type="monotone" dataKey="presentValue" stroke="#8B5CF6" strokeWidth={3} name="Present Value" />
+            <Bar dataKey="start" stackId="bridge" fill="transparent" />
+            <Bar dataKey="increase" stackId="bridge" fill="#10B981" name="Value Added" barSize={48} />
+            <Bar dataKey="decrease" stackId="bridge" fill="#EF4444" name="Value Reduction" barSize={48} />
+            <Bar dataKey="total" stackId="bridge" fill="#4F46E5" name="Enterprise Value" barSize={48} />
           </ComposedChart>
         </ResponsiveContainer>
       </div>

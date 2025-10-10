@@ -18,7 +18,7 @@
 - **Scenario Summary**: `ScenarioSummary` renders the EBITDA Outlook with years as column headers and highlights historical values in red.
 - **Scenarios**: `src/constants/scenarios.ts` defines the three hardcoded iFReturns presets (Conservative 25% / 3%, Base 20% / 4%, Optimistic 18% / 5%) that share the same EBITDA seed data.
 - **Inputs**: `InputPanel` lists editable EBITDA rows (historical in red) and sliders/number inputs for WACC, Perpetual Growth, and Corporate Tax.
-- **Visuals**: `VisualizationPanel` renders a `ComposedChart` (EBITDA, Tax, FCF, Present Value) and a `PieChart` splitting projections vs terminal PV.
+- **Visuals**: `VisualizationPanel` renders a cumulative waterfall value bridge (discounted UFCFs → enterprise value) alongside a `PieChart` splitting projections vs terminal PV.
 - **Table**: `DetailedAnalysisTable` provides row-level calculations with tax, FCF, discount factor, and present value, plus terminal value and enterprise value summary rows.
 - **Engine**: `useDCFCalculation` debounces form state and invokes `calculateDCF`, enforcing WACC > growth and correct tax treatment for losses.
 
@@ -55,7 +55,7 @@ Agents should spot-check these values after any change to calculations or defaul
   - Attempt to set WACC ≤ growth. Expect calculation error (component will throw). Capture any ungraceful UX—currently no explicit guardrail in UI.
 - **Chart & Table Verification**
   - Verify the EBITDA Outlook table renders years as column headers with historical columns in red.
-  - Hover bars/line to confirm tooltip currency formatting and labels.
+  - Hover Value Bridge steps to confirm tooltips display absolute values, cumulative progression tracks year-over-year, and the final bar equals enterprise value.
   - Check pie chart percentages sum to ~100% and labels remain legible.
   - Validate table formatting: negative taxes wrapped in parentheses, discount factor precision (3 decimals), enterprise value row styled in primary color.
 - **Calculation Accuracy**

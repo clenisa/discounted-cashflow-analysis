@@ -4,7 +4,6 @@ import {
   Cell,
   ComposedChart,
   Legend,
-  Line,
   Pie,
   PieChart,
   ResponsiveContainer,
@@ -23,24 +22,140 @@ interface VisualizationPanelProps {
 
 const PIE_COLORS = ['#4F46E5', '#10B981'];
 
+const buildValueBridgeData = (results: DCFResults) => {
+  // Build a cumulative enterprise value bridge where each bar starts where the previous bar ended.
+  const bridgeData: Array<{
+    name: string;
+    start: number;
+    increase: number;
+    decrease: number;
+    total: number;
+    tooltipValue: number;
+    cumulative: number;
+  }> = [];
+
+  let cumulativeValue = 0;
+
+  bridgeData.push({
+    name: 'Start',
+    start: 0,
+    increase: 0,
+    decrease: 0,
+    total: 0,
+    tooltipValue: 0,
+    cumulative: 0
+  });
+
+  results.presentValues.forEach((pv, index) => {
+    const yearStart = cumulativeValue;
+    cumulativeValue += pv.presentValue;
+    bridgeData.push({
+      name: `Year ${index + 1}`,
+      start: yearStart,
+      increase: pv.presentValue >= 0 ? pv.presentValue : 0,
+      decrease: pv.presentValue < 0 ? Math.abs(pv.presentValue) : 0,
+      total: 0,
+      tooltipValue: pv.presentValue,
+      cumulative: cumulativeValue
+    });
+  });
+
+  bridgeData.push({
+    name: 'PV of Projections',
+    start: 0,
+    increase: 0,
+    decrease: 0,
+    total: results.projectionsPV,
+    tooltipValue: results.projectionsPV,
+    cumulative: results.projectionsPV
+  });
+
+  const terminalStart = results.projectionsPV;
+  bridgeData.push({
+    name: 'Terminal Value PV',
+    start: terminalStart,
+    increase: results.terminalValuePV,
+    decrease: 0,
+    total: 0,
+    tooltipValue: results.terminalValuePV,
+    cumulative: results.enterpriseValue
+  });
+
+  bridgeData.push({
+    name: 'Enterprise Value',
+    start: 0,
+    increase: 0,
+    decrease: 0,
+    total: results.enterpriseValue,
+    tooltipValue: results.enterpriseValue,
+    cumulative: results.enterpriseValue
+  });
+
+  return bridgeData;
+};
+
 export const VisualizationPanel = ({ results, parameters }: VisualizationPanelProps) => (
   <div className="space-y-6">
-    <Card title="Cash Flow Analysis" subtitle="EBITDA, tax, free cash flow, and present value by year">
+    <Card
+      title="Value Bridge"
+      subtitle="Cumulative present value build from unlevered cash flows to enterprise value"
+    >
       <div className="h-80 w-full">
         <ResponsiveContainer width="100%" height="100%">
-          <ComposedChart data={results.presentValues}>
-            <CartesianGrid strokeDasharray="4 4" stroke="#CBD5F5" />
-            <XAxis dataKey="year" stroke="#64748B" />
-            <YAxis stroke="#64748B" tickFormatter={(value) => formatCurrencyShort(value)} />
+          <ComposedChart
+            data={buildValueBridgeData(results)}
+            margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+          >
+            <CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" />
+            <XAxis
+              dataKey="name"
+              stroke="#64748B"
+              tick={{ fontSize: 12 }}
+              interval={0}
+              angle={-45}
+              textAnchor="end"
+              height={80}
+            />
+            <YAxis stroke="#64748B" tickFormatter={(value) => formatCurrencyShort(value)} tick={{ fontSize: 12 }} />
             <Tooltip
-              formatter={(value: number) => formatCurrency(value)}
-              labelFormatter={(label: number) => `Year ${label}`}
+              formatter={(value, name, { payload }) => {
+                if (!payload || typeof payload.name !== 'string' || payload.name.trim() === '') {
+                  return null;
+                }
+                const displayValue =
+                  payload.name.includes('PV') ||
+                  payload.name.includes('Value') ||
+                  payload.name.includes('Enterprise')
+                    ? payload.total ?? payload.tooltipValue
+                    : payload.tooltipValue;
+                return [formatCurrency(Math.abs(displayValue || 0)), payload.name];
+              }}
+              labelFormatter={(label: string) => label}
+              contentStyle={{ backgroundColor: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: '6px' }}
             />
             <Legend />
-            <Bar dataKey="ebitda" fill="#4F46E5" name="EBITDA" />
-            <Bar dataKey="tax" fill="#EF4444" name="Corporate Tax" />
-            <Bar dataKey="fcf" fill="#10B981" name="Free Cash Flow" />
-            <Line type="monotone" dataKey="presentValue" stroke="#8B5CF6" strokeWidth={3} name="Present Value" />
+            <Bar dataKey="start" stackId="waterfall" fill="transparent" legendType="none" />
+            <Bar
+              dataKey="increase"
+              stackId="waterfall"
+              fill="#10B981"
+              name="Cash Flow Contribution"
+              radius={[2, 2, 0, 0]}
+            />
+            <Bar
+              dataKey="decrease"
+              stackId="waterfall"
+              fill="#EF4444"
+              name="Cash Flow Reduction"
+              radius={[2, 2, 0, 0]}
+            />
+            <Bar
+              dataKey="total"
+              stackId="waterfall"
+              fill="#3B82F6"
+              name="Cumulative Value"
+              radius={[2, 2, 2, 2]}
+            />
           </ComposedChart>
         </ResponsiveContainer>
       </div>

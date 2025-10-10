@@ -1,21 +1,20 @@
 import { useMemo, useState } from 'react';
 import { DCFCalculator } from '@/components/dcf/DCFCalculator';
 import { FinancialDataTab } from '@/components/financial-data/FinancialDataTab';
-import { DEFAULT_DCF_PARAMETERS, DEFAULT_EBITDA_DATA } from '@/constants/dcf';
+import { IFRETURNS_SCENARIOS, DEFAULT_IFRETURNS_SCENARIO_ID } from '@/constants/scenarios';
 import { ReturnProLayout, type ReturnProSection } from '@/layouts/ReturnProLayout';
 import type { DCFDataSet, DCFParameters } from '@/types/dcf';
 
-const DEFAULT_SCENARIO: DCFDataSet = {
-  id: 'scenario-default',
-  label: '10.08.25 exercise',
-  ebitdaData: { ...DEFAULT_EBITDA_DATA },
-  parameters: { ...DEFAULT_DCF_PARAMETERS }
-};
-
 const App = () => {
   const [activeSection, setActiveSection] = useState<ReturnProSection>('financial-data');
-  const [scenarios, setScenarios] = useState<DCFDataSet[]>([DEFAULT_SCENARIO]);
-  const [selectedScenarioId, setSelectedScenarioId] = useState<string>(DEFAULT_SCENARIO.id);
+  const [scenarios, setScenarios] = useState<DCFDataSet[]>(() =>
+    IFRETURNS_SCENARIOS.map((scenario) => ({
+      ...scenario,
+      ebitdaData: { ...scenario.ebitdaData },
+      parameters: { ...scenario.parameters }
+    }))
+  );
+  const [selectedScenarioId, setSelectedScenarioId] = useState<string>(DEFAULT_IFRETURNS_SCENARIO_ID);
 
   const selectedScenario = useMemo(() => {
     if (scenarios.length === 0) {

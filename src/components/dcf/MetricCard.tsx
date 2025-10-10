@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import clsx from 'clsx';
+import { Info } from 'lucide-react';
 import { formatCurrency, formatPercentage } from '@/utils/format';
 
 type MetricFormat = 'currency' | 'percentage';
@@ -17,16 +18,34 @@ interface MetricCardProps {
   format: MetricFormat;
   icon: ReactNode;
   color?: keyof typeof COLOR_MAP;
+  info?: string;
 }
 
-export const MetricCard = ({ title, value, format, icon, color = 'blue' }: MetricCardProps) => {
+export const MetricCard = ({ title, value, format, icon, color = 'blue', info }: MetricCardProps) => {
   const palette = COLOR_MAP[color] ?? COLOR_MAP.blue;
 
   return (
     <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
       <div className="flex items-start justify-between">
-        <div>
-          <p className="text-sm font-medium text-slate-500">{title}</p>
+        <div className="pr-2">
+          <p className="flex items-center text-sm font-medium text-slate-500">
+            {title}
+            {info ? (
+              <button
+                type="button"
+                className="group relative ml-2 inline-flex h-5 w-5 items-center justify-center rounded-full text-slate-400 transition-colors hover:text-slate-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+                aria-label={`More information about ${title}`}
+              >
+                <Info size={16} aria-hidden />
+                <span
+                  role="tooltip"
+                  className="pointer-events-none absolute left-1/2 top-full z-10 mt-2 w-48 -translate-x-1/2 rounded-md bg-slate-900 px-3 py-2 text-xs font-medium text-white opacity-0 shadow-lg transition-opacity duration-150 group-hover:opacity-100 group-focus-visible:opacity-100"
+                >
+                  {info}
+                </span>
+              </button>
+            ) : null}
+          </p>
           <p className={clsx('mt-2 text-3xl font-semibold', palette.text)}>
             {format === 'currency' ? formatCurrency(value) : formatPercentage(value)}
           </p>

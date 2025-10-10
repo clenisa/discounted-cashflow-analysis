@@ -49,6 +49,15 @@ export const ReturnProLayout = ({ children, headerContent, activeSection, onSect
       </nav>
       <div className="space-y-2 px-6 pb-6">
         <a
+          href="https://therecongroupinc-my.sharepoint.com/:x:/r/personal/clenis_returnpro_com/Documents/2%20-%20DATA/Special%20Projects/iFReturns,%20DCF%20Template.xlsx?d=w7c3302ee1e0a42e4945edaf3f88295bd&csf=1&web=1&e=CDSPxb"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex w-full items-center justify-between rounded-lg bg-primary/10 px-4 py-3 text-sm font-medium text-primary transition-colors hover:bg-primary/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
+        >
+          <span>DCF Excel Template</span>
+          <ExternalLink size={18} aria-hidden />
+        </a>
+        <a
           href="https://app.powerbi.com/links/iEtDKMnswN?ctid=afcc02f9-7b18-412a-8981-1fc01424da49&pbi_source=linkShare&bookmarkGuid=6ee0d9f2-0cc0-4290-807e-ad0aefd67a33"
           target="_blank"
           rel="noopener noreferrer"

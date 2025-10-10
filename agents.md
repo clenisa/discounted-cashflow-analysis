@@ -13,7 +13,7 @@
 - Optional lint sweep: `npm run lint`.
 
 ## Feature Map
-- **Layout**: `ReturnProLayout` wraps the app with sidebar navigation, search bar, profile controls, and a quick link to the Carlos Master Dash v1.3 Power BI workspace.
+- **Layout**: `ReturnProLayout` wraps the app with sidebar navigation, search bar, profile controls, and quick links to the Carlos Master Dash v1.3 Power BI workspace plus the DCF Excel Template.
 - **Dashboard Header**: `MetricCard` tiles show Enterprise Value, Terminal Value (raw + PV), and current WACC, with hoverable info tooltips on the valuation KPIs.
 - **Scenario Summary**: `ScenarioSummary` renders the EBITDA Outlook with years as column headers and highlights historical values in red.
 - **Scenarios**: `src/constants/scenarios.ts` defines the three hardcoded iFReturns presets (Conservative 25% / 3%, Base 20% / 4%, Optimistic 18% / 5%) that share the same EBITDA seed data.
@@ -46,7 +46,7 @@ Agents should spot-check these values after any change to calculations or defaul
 - **Load & Layout**
   - Start dev server; ensure sidebar, header, and dashboard render without console errors.
   - Confirm the scenario selector lists the three iFReturns presets (Conservative, Base, Optimistic) and switching between them updates metrics.
-  - Test the Carlos Master Dash v1.3 sidebar link opens the shared Power BI dashboard in a new tab/window.
+  - Test the DCF Excel Template link opens the shared spreadsheet and the Carlos Master Dash v1.3 button opens the Power BI dashboard in a new tab/window.
   - Confirm historical EBITDA rows (≤2024) are styled in the red “Historical” state.
 - **Input Behaviour**
   - Change numeric input for a historical year; verify immediate update in header metrics, chart, and table after short debounce (~180 ms).

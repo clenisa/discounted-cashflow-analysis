@@ -5,7 +5,7 @@ import { ComparisonTable } from './ComparisonTable';
 import { ComparisonVisualization } from './ComparisonVisualization';
 import { ScenarioSelector } from './ScenarioSelector';
 import type { DCFDataSet, DCFResults } from '@/types/dcf';
-import { calculateDCF } from '@/lib/dcf';
+import { calculateDCFFromDataSet } from '@/lib/dcf';
 
 interface ScenarioComparisonProps {
   scenarios: DCFDataSet[];
@@ -30,8 +30,7 @@ export const ScenarioComparison = ({ scenarios }: ScenarioComparisonProps) => {
       return null;
     }
     try {
-      const { ebitdaData, parameters } = scenarioA;
-      return calculateDCF(ebitdaData, parameters.discountRate, parameters.perpetuityRate, parameters.corporateTaxRate);
+      return calculateDCFFromDataSet(scenarioA);
     } catch (error) {
       console.error('Failed to calculate DCF for scenario A', error);
       return null;
@@ -43,8 +42,7 @@ export const ScenarioComparison = ({ scenarios }: ScenarioComparisonProps) => {
       return null;
     }
     try {
-      const { ebitdaData, parameters } = scenarioB;
-      return calculateDCF(ebitdaData, parameters.discountRate, parameters.perpetuityRate, parameters.corporateTaxRate);
+      return calculateDCFFromDataSet(scenarioB);
     } catch (error) {
       console.error('Failed to calculate DCF for scenario B', error);
       return null;

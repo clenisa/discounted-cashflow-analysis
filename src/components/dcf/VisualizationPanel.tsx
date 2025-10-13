@@ -4,7 +4,6 @@ import {
   Cell,
   ComposedChart,
   Legend,
-  Line,
   Pie,
   PieChart,
   ResponsiveContainer,
@@ -12,6 +11,8 @@ import {
   XAxis,
   YAxis
 } from 'recharts';
+import type { TooltipProps } from 'recharts';
+import type { NameType, ValueType } from 'recharts/types/component/DefaultTooltipContent';
 import { Card } from '@/components/common/Card';
 import type { DCFParameters, DCFResults } from '@/types/dcf';
 import { formatCurrency, formatCurrencyShort, formatPercentage } from '@/utils/format';
@@ -23,24 +24,184 @@ interface VisualizationPanelProps {
 
 const PIE_COLORS = ['#4F46E5', '#10B981'];
 
+type ValueBridgeDatum = {
+  name: string;
+  start: number;
+  increase: number;
+  decrease: number;
+  total: number;
+  tooltipValue: number;
+  cumulative: number;
+};
+
+const buildValueBridgeData = (results: DCFResults): ValueBridgeDatum[] => {
+  // Build a cumulative enterprise value bridge where each bar starts where the previous bar ended.
+  const bridgeData: ValueBridgeDatum[] = [];
+
+  let cumulativeValue = 0;
+
+  bridgeData.push({
+    name: 'Start',
+    start: 0,
+    increase: 0,
+    decrease: 0,
+    total: 0,
+    tooltipValue: 0,
+    cumulative: 0
+  });
+
+  results.presentValues.forEach((pv, index) => {
+    const yearStart = cumulativeValue;
+    cumulativeValue += pv.presentValue;
+    bridgeData.push({
+      name: `Year ${index + 1}`,
+      start: yearStart,
+      increase: pv.presentValue >= 0 ? pv.presentValue : 0,
+      decrease: pv.presentValue < 0 ? Math.abs(pv.presentValue) : 0,
+      total: 0,
+      tooltipValue: pv.presentValue,
+      cumulative: cumulativeValue
+    });
+  });
+
+  bridgeData.push({
+    name: 'PV of Projections',
+    start: 0,
+    increase: 0,
+    decrease: 0,
+    total: results.projectionsPV,
+    tooltipValue: results.projectionsPV,
+    cumulative: results.projectionsPV
+  });
+
+  const terminalStart = results.projectionsPV;
+  bridgeData.push({
+    name: 'Terminal Value PV',
+    start: terminalStart,
+    increase: results.terminalValuePV,
+    decrease: 0,
+    total: 0,
+    tooltipValue: results.terminalValuePV,
+    cumulative: results.enterpriseValue
+  });
+
+  bridgeData.push({
+    name: 'Enterprise Value',
+    start: 0,
+    increase: 0,
+    decrease: 0,
+    total: results.enterpriseValue,
+    tooltipValue: results.enterpriseValue,
+    cumulative: results.enterpriseValue
+  });
+
+  return bridgeData;
+};
+
+const renderValueBridgeTooltip = ({
+  active,
+  payload,
+  label
+}: TooltipProps<ValueType, NameType>) => {
+  if (!active || !payload || payload.length === 0 || typeof label !== 'string') {
+    return null;
+  }
+
+  const entries = new Map<string, number>();
+
+  payload.forEach((entry) => {
+    const datum = entry.payload as ValueBridgeDatum | undefined;
+    const datumName = datum?.name ?? '';
+
+    if (!datum || datumName === '' || entries.has(datumName)) {
+      return;
+    }
+
+    const value =
+      typeof datum.tooltipValue === 'number'
+        ? datum.tooltipValue
+        : typeof entry.value === 'number'
+          ? entry.value
+          : undefined;
+
+    if (typeof value === 'number') {
+      entries.set(datumName, Math.abs(value));
+    }
+  });
+
+  if (entries.size === 0) {
+    return null;
+  }
+
+  return (
+    <div
+      style={{
+        backgroundColor: '#F8FAFC',
+        border: '1px solid #E2E8F0',
+        borderRadius: '6px',
+        padding: '8px 12px'
+      }}
+    >
+      <div className="text-sm font-semibold text-slate-900">{label}</div>
+      {Array.from(entries.entries()).map(([name, value]) => (
+        <div key={name} className="text-xs text-slate-600">
+          {name}: {formatCurrency(value)}
+        </div>
+      ))}
+    </div>
+  );
+};
+
 export const VisualizationPanel = ({ results, parameters }: VisualizationPanelProps) => (
   <div className="space-y-6">
-    <Card title="Cash Flow Analysis" subtitle="EBITDA, tax, free cash flow, and present value by year">
+    <Card
+      title="Value Bridge"
+      subtitle="Cumulative present value build from unlevered cash flows to enterprise value"
+    >
       <div className="h-80 w-full">
         <ResponsiveContainer width="100%" height="100%">
-          <ComposedChart data={results.presentValues}>
-            <CartesianGrid strokeDasharray="4 4" stroke="#CBD5F5" />
-            <XAxis dataKey="year" stroke="#64748B" />
-            <YAxis stroke="#64748B" tickFormatter={(value) => formatCurrencyShort(value)} />
+          <ComposedChart
+            data={buildValueBridgeData(results)}
+            margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+          >
+            <CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" />
+            <XAxis
+              dataKey="name"
+              stroke="#64748B"
+              tick={{ fontSize: 12 }}
+              interval={0}
+              angle={-45}
+              textAnchor="end"
+              height={80}
+            />
+            <YAxis stroke="#64748B" tickFormatter={(value) => formatCurrencyShort(value)} tick={{ fontSize: 12 }} />
             <Tooltip
-              formatter={(value: number) => formatCurrency(value)}
-              labelFormatter={(label: number) => `Year ${label}`}
+              content={renderValueBridgeTooltip}
+              wrapperStyle={{ outline: 'none' }}
             />
             <Legend />
-            <Bar dataKey="ebitda" fill="#4F46E5" name="EBITDA" />
-            <Bar dataKey="tax" fill="#EF4444" name="Corporate Tax" />
-            <Bar dataKey="fcf" fill="#10B981" name="Free Cash Flow" />
-            <Line type="monotone" dataKey="presentValue" stroke="#8B5CF6" strokeWidth={3} name="Present Value" />
+            <Bar dataKey="start" stackId="waterfall" fill="transparent" legendType="none" />
+            <Bar
+              dataKey="increase"
+              stackId="waterfall"
+              fill="#10B981"
+              name="Cash Flow Contribution"
+              radius={[2, 2, 0, 0]}
+            />
+            <Bar
+              dataKey="decrease"
+              stackId="waterfall"
+              fill="#EF4444"
+              name="Cash Flow Reduction"
+              radius={[2, 2, 0, 0]}
+            />
+            <Bar
+              dataKey="total"
+              stackId="waterfall"
+              fill="#3B82F6"
+              name="Cumulative Value"
+              radius={[2, 2, 2, 2]}
+            />
           </ComposedChart>
         </ResponsiveContainer>
       </div>

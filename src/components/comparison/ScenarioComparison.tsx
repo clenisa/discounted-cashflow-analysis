@@ -5,7 +5,7 @@ import { ComparisonTable } from './ComparisonTable';
 import { ComparisonVisualization } from './ComparisonVisualization';
 import { ScenarioSelector } from './ScenarioSelector';
 import type { DCFDataSet, DCFResults } from '@/types/dcf';
-import { useDCFCalculation } from '@/hooks/useDCFCalculation';
+import { calculateDCF } from '@/lib/dcf';
 
 interface ScenarioComparisonProps {
   scenarios: DCFDataSet[];
@@ -25,17 +25,35 @@ export const ScenarioComparison = ({ scenarios }: ScenarioComparisonProps) => {
     [scenarios, selectedScenarioB]
   );
 
-  const resultsA = useDCFCalculation(
-    scenarioA?.ebitdaData || {}, 
-    scenarioA?.parameters || { discountRate: 0, perpetuityRate: 0, corporateTaxRate: 0 }
-  );
+  const resultsA = useMemo<DCFResults | null>(() => {
+    if (!scenarioA) {
+      return null;
+    }
+    try {
+      const { ebitdaData, parameters } = scenarioA;
+      return calculateDCF(ebitdaData, parameters.discountRate, parameters.perpetuityRate, parameters.corporateTaxRate);
+    } catch (error) {
+      console.error('Failed to calculate DCF for scenario A', error);
+      return null;
+    }
+  }, [scenarioA]);
   
-  const resultsB = useDCFCalculation(
-    scenarioB?.ebitdaData || {}, 
-    scenarioB?.parameters || { discountRate: 0, perpetuityRate: 0, corporateTaxRate: 0 }
-  );
+  const resultsB = useMemo<DCFResults | null>(() => {
+    if (!scenarioB) {
+      return null;
+    }
+    try {
+      const { ebitdaData, parameters } = scenarioB;
+      return calculateDCF(ebitdaData, parameters.discountRate, parameters.perpetuityRate, parameters.corporateTaxRate);
+    } catch (error) {
+      console.error('Failed to calculate DCF for scenario B', error);
+      return null;
+    }
+  }, [scenarioB]);
 
-  const hasValidComparison = scenarioA && scenarioB && scenarioA.id !== scenarioB.id;
+  const hasValidComparison = Boolean(
+    scenarioA && scenarioB && resultsA && resultsB && scenarioA.id !== scenarioB.id
+  );
 
   return (
     <div className="space-y-6 p-6">
@@ -67,7 +85,7 @@ export const ScenarioComparison = ({ scenarios }: ScenarioComparisonProps) => {
           </div>
         </Card>
 
-        {hasValidComparison ? (
+        {hasValidComparison && scenarioA && scenarioB && resultsA && resultsB ? (
           <>
             <ComparisonMetrics 
               scenarioA={scenarioA} 

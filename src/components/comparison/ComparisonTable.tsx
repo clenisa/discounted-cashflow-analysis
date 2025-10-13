@@ -11,6 +11,18 @@ interface ComparisonTableProps {
 }
 
 export const ComparisonTable = ({ scenarioA, scenarioB, resultsA, resultsB }: ComparisonTableProps) => {
+  const formatPercentageDifference = (valueA: number, valueB: number) => {
+    const diff = valueB - valueA;
+    const sign = diff > 0 ? '+' : '';
+    return `${sign}${diff.toFixed(1)}%`;
+  };
+
+  const formatCurrencyDifference = (valueA: number, valueB: number) => {
+    const diff = valueB - valueA;
+    const sign = diff > 0 ? '+' : '';
+    return `${sign}${formatCurrency(diff)}`;
+  };
+
   const comparisonData = [
     {
       category: 'Parameters',
@@ -19,19 +31,19 @@ export const ComparisonTable = ({ scenarioA, scenarioB, resultsA, resultsB }: Co
           label: 'Discount Rate (WACC)',
           valueA: `${scenarioA.parameters.discountRate.toFixed(1)}%`,
           valueB: `${scenarioB.parameters.discountRate.toFixed(1)}%`,
-          difference: `${(scenarioA.parameters.discountRate - scenarioB.parameters.discountRate).toFixed(1)}%`
+          difference: formatPercentageDifference(scenarioA.parameters.discountRate, scenarioB.parameters.discountRate)
         },
         {
           label: 'Perpetuity Growth Rate',
           valueA: `${scenarioA.parameters.perpetuityRate.toFixed(1)}%`,
           valueB: `${scenarioB.parameters.perpetuityRate.toFixed(1)}%`,
-          difference: `${(scenarioA.parameters.perpetuityRate - scenarioB.parameters.perpetuityRate).toFixed(1)}%`
+          difference: formatPercentageDifference(scenarioA.parameters.perpetuityRate, scenarioB.parameters.perpetuityRate)
         },
         {
           label: 'Corporate Tax Rate',
           valueA: `${scenarioA.parameters.corporateTaxRate.toFixed(1)}%`,
           valueB: `${scenarioB.parameters.corporateTaxRate.toFixed(1)}%`,
-          difference: `${(scenarioA.parameters.corporateTaxRate - scenarioB.parameters.corporateTaxRate).toFixed(1)}%`
+          difference: formatPercentageDifference(scenarioA.parameters.corporateTaxRate, scenarioB.parameters.corporateTaxRate)
         }
       ]
     },
@@ -42,34 +54,35 @@ export const ComparisonTable = ({ scenarioA, scenarioB, resultsA, resultsB }: Co
           label: 'Enterprise Value',
           valueA: formatCurrency(resultsA.enterpriseValue),
           valueB: formatCurrency(resultsB.enterpriseValue),
-          difference: formatCurrency(resultsA.enterpriseValue - resultsB.enterpriseValue)
+          difference: formatCurrencyDifference(resultsA.enterpriseValue, resultsB.enterpriseValue)
         },
         {
           label: 'Terminal Value',
           valueA: formatCurrency(resultsA.terminalValue),
           valueB: formatCurrency(resultsB.terminalValue),
-          difference: formatCurrency(resultsA.terminalValue - resultsB.terminalValue)
+          difference: formatCurrencyDifference(resultsA.terminalValue, resultsB.terminalValue)
         },
         {
           label: 'Terminal Value PV',
           valueA: formatCurrency(resultsA.terminalValuePV),
           valueB: formatCurrency(resultsB.terminalValuePV),
-          difference: formatCurrency(resultsA.terminalValuePV - resultsB.terminalValuePV)
+          difference: formatCurrencyDifference(resultsA.terminalValuePV, resultsB.terminalValuePV)
         },
         {
           label: 'Projections PV',
           valueA: formatCurrency(resultsA.projectionsPV),
           valueB: formatCurrency(resultsB.projectionsPV),
-          difference: formatCurrency(resultsA.projectionsPV - resultsB.projectionsPV)
+          difference: formatCurrencyDifference(resultsA.projectionsPV, resultsB.projectionsPV)
         }
       ]
     }
   ];
 
   const getDifferenceColor = (difference: string) => {
-    if (difference.startsWith('+') || difference.startsWith('$') && !difference.includes('-')) {
+    if (difference.startsWith('+')) {
       return 'text-green-600';
-    } else if (difference.startsWith('-') || difference.includes('-')) {
+    }
+    if (difference.includes('-')) {
       return 'text-red-600';
     }
     return 'text-slate-600';

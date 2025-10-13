@@ -11,8 +11,8 @@ interface ComparisonMetricsProps {
 
 export const ComparisonMetrics = ({ scenarioA, scenarioB, resultsA, resultsB }: ComparisonMetricsProps) => {
   const calculateDifference = (valueA: number, valueB: number) => {
-    const diff = valueA - valueB;
-    const percentDiff = valueB !== 0 ? (diff / valueB) * 100 : 0;
+    const diff = valueB - valueA;
+    const percentDiff = valueA !== 0 ? (diff / valueA) * 100 : 0;
     return { diff, percentDiff };
   };
 

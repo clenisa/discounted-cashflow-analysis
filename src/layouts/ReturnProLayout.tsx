@@ -1,5 +1,5 @@
 import type { PropsWithChildren, ReactNode } from 'react';
-import { Calculator, Database, ExternalLink, HelpCircle, Search, Settings } from 'lucide-react';
+import { Calculator, Database, ExternalLink, HelpCircle, Search, Settings, GitCompare } from 'lucide-react';
 import { NavItem } from '@/components/navigation/NavItem';
 
 interface ReturnProLayoutProps extends PropsWithChildren {
@@ -18,10 +18,15 @@ const sections: Array<{ id: ReturnProSection; label: string; icon: ReactNode }> 
     id: 'financial-data',
     label: 'Financial Data',
     icon: <Database size={18} />
+  },
+  {
+    id: 'comparison',
+    label: 'Scenario Comparison',
+    icon: <GitCompare size={18} />
   }
 ];
 
-export type ReturnProSection = 'dcf' | 'financial-data';
+export type ReturnProSection = 'dcf' | 'financial-data' | 'comparison';
 
 export const ReturnProLayout = ({ children, headerContent, activeSection, onSectionChange }: ReturnProLayoutProps) => (
   <div className="flex h-screen bg-slate-50 text-slate-900">

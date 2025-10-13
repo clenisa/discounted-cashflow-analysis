@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { DCFCalculator } from '@/components/dcf/DCFCalculator';
 import { FinancialDataTab } from '@/components/financial-data/FinancialDataTab';
+import { ScenarioComparison } from '@/components/comparison/ScenarioComparison';
 import { IFRETURNS_SCENARIOS, DEFAULT_IFRETURNS_SCENARIO_ID } from '@/constants/scenarios';
 import { ReturnProLayout, type ReturnProSection } from '@/layouts/ReturnProLayout';
 import type { DCFDataSet, DCFParameters } from '@/types/dcf';
@@ -66,7 +67,7 @@ const App = () => {
   };
 
   const headerContent =
-    scenarios.length > 0 ? (
+    scenarios.length > 0 && activeSection !== 'comparison' ? (
       <div className="flex items-center gap-3">
         <label htmlFor="scenario-select" className="sr-only">
           Choose scenario
@@ -88,21 +89,28 @@ const App = () => {
 
   return (
     <ReturnProLayout activeSection={activeSection} onSectionChange={setActiveSection} headerContent={headerContent}>
-      {selectedScenario &&
-        (activeSection === 'financial-data' ? (
-          <FinancialDataTab
-            scenario={selectedScenario}
-            onLabelChange={handleLabelChange}
-            onEbitdaChange={handleEbitdaChange}
-            onParametersChange={handleParametersChange}
-          />
-        ) : (
-          <DCFCalculator
-            scenarioLabel={selectedScenario.label}
-            ebitdaData={selectedScenario.ebitdaData}
-            parameters={selectedScenario.parameters}
-          />
-        ))}
+      {activeSection === 'comparison' ? (
+        <ScenarioComparison scenarios={scenarios} />
+      ) : activeSection === 'financial-data' && selectedScenario ? (
+        <FinancialDataTab
+          scenario={selectedScenario}
+          onLabelChange={handleLabelChange}
+          onEbitdaChange={handleEbitdaChange}
+          onParametersChange={handleParametersChange}
+        />
+      ) : activeSection === 'dcf' && selectedScenario ? (
+        <DCFCalculator
+          scenarioLabel={selectedScenario.label}
+          ebitdaData={selectedScenario.ebitdaData}
+          parameters={selectedScenario.parameters}
+        />
+      ) : (
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <p className="text-slate-500">Please select a scenario to view details.</p>
+          </div>
+        </div>
+      )}
     </ReturnProLayout>
   );
 };

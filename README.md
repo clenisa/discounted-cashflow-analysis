@@ -7,6 +7,7 @@ Enterprise-grade discounted cash flow tooling that mirrors the ReturnPro R1 desi
 - Correct DCF engine with consistent WACC discounting and Gordon Growth terminal value.
 - Interactive React dashboard with ReturnPro-styled layout, charts, and accessibility-first inputs.
 - Debounced editing of EBITDA timelines and valuation parameters for responsive recalculation.
+- Scenario comparison workspace that contrasts any two presets with B − A delta metrics, charts, and tables.
 - Data layer abstraction prepared for Supabase persistence while supporting secure local storage.
 - Comprehensive unit tests validating terminal value math, discount factor usage, and edge cases.
 
@@ -39,6 +40,7 @@ The project uses Vite with TypeScript and Tailwind CSS. Charts are rendered with
 
 - `src/lib` DCF calculation logic and supporting helpers.
 - `src/components/dcf` Dashboard, inputs, tables, and visualization components.
+- `src/components/comparison` Scenario comparison selectors, metrics, visuals, and table views.
 - `src/layouts` ReturnPro-styled application shell and navigation.
 - `src/services` Data service abstractions for local storage and Supabase.
 - `src/constants` Default EBITDA timeline and valuation parameter presets.
@@ -50,6 +52,13 @@ The project uses Vite with TypeScript and Tailwind CSS. Charts are rendered with
 - All projections and the terminal value are discounted using the same WACC.
 - Terminal value uses `TV = FCF_final * (1 + g) / (r - g)` with a separate present value step.
 - Validation prevents growth rates from equaling or exceeding the discount rate.
+
+## Scenario Comparison
+
+- Access the comparison view from the sidebar to select any two scenarios.
+- Calculations are memoized and remain idle until both dropdowns have unique selections.
+- All displayed differences are calculated as Scenario B minus Scenario A; positive values indicate Scenario B outperforms A.
+- Bar and pie charts mirror the dashboard formatting, using the same currency helpers for tooltip parity.
 
 ## Supabase Integration Notes
 

@@ -4,15 +4,107 @@ import { FinancialDataTab } from '@/components/financial-data/FinancialDataTab';
 import { ScenarioComparison } from '@/components/comparison/ScenarioComparison';
 import { IFRETURNS_SCENARIOS, DEFAULT_IFRETURNS_SCENARIO_ID } from '@/constants/scenarios';
 import { ReturnProLayout, type ReturnProSection } from '@/layouts/ReturnProLayout';
-import type { DCFDataSet, DCFParameters } from '@/types/dcf';
+import type {
+  DCFDataSet,
+  DCFParameters,
+  IncomeStatementData,
+  IncomeStatementAdjustments
+} from '@/types/dcf';
+
+const MIN_REVENUE_BUFFER = 1;
+
+const buildIncomeStatementEntry = (ebitda: number) => {
+  const magnitude = Math.max(Math.abs(ebitda), 1);
+  let revenue = Math.max(magnitude * 4, MIN_REVENUE_BUFFER);
+  let cogs = revenue * 0.55;
+  let depreciation = revenue * 0.05;
+  let amortization = revenue * 0.03;
+  let sga = revenue + depreciation + amortization - cogs - ebitda;
+
+  if (sga <= 0) {
+    const buffer = Math.abs(sga) + MIN_REVENUE_BUFFER;
+    revenue += buffer;
+    cogs = revenue * 0.55;
+    depreciation = revenue * 0.05;
+    amortization = revenue * 0.03;
+    sga = revenue + depreciation + amortization - cogs - ebitda;
+  }
+
+  const round = (value: number) => Math.round(value);
+
+  const roundedRevenue = round(revenue);
+  const roundedCogs = round(cogs);
+  const roundedDepreciation = round(depreciation);
+  const roundedAmortization = round(amortization);
+  const roundedSGA = round(roundedRevenue + roundedDepreciation + roundedAmortization - roundedCogs - ebitda);
+
+  return {
+    revenue: roundedRevenue,
+    cogs: roundedCogs,
+    sga: roundedSGA,
+    depreciation: roundedDepreciation,
+    amortization: roundedAmortization
+  };
+};
+
+const initializeIncomeStatementData = (ebitdaData: { [year: number]: number }) => {
+  const incomeStatementData: IncomeStatementData = {};
+  Object.keys(ebitdaData).forEach((yearStr) => {
+    const year = Number(yearStr);
+    const ebitda = ebitdaData[year];
+    incomeStatementData[year] = buildIncomeStatementEntry(ebitda);
+  });
+  return incomeStatementData;
+};
+
+const initializeIncomeStatementAdjustments = (ebitdaData: { [year: number]: number }) => {
+  const adjustments: IncomeStatementAdjustments = {};
+  Object.keys(ebitdaData).forEach((yearStr) => {
+    const year = Number(yearStr);
+    adjustments[year] = {
+      revenueAdjustment: 0,
+      cogsAdjustment: 0,
+      sgaAdjustment: 0
+    };
+  });
+  return adjustments;
+};
+
+const cloneIncomeStatementData = (data?: IncomeStatementData) => {
+  if (!data) {
+    return undefined;
+  }
+  const clone: IncomeStatementData = {};
+  Object.entries(data).forEach(([yearStr, entry]) => {
+    const year = Number(yearStr);
+    clone[year] = { ...entry };
+  });
+  return clone;
+};
+
+const cloneIncomeStatementAdjustments = (data?: IncomeStatementAdjustments) => {
+  if (!data) {
+    return undefined;
+  }
+  const clone: IncomeStatementAdjustments = {};
+  Object.entries(data).forEach(([yearStr, entry]) => {
+    const year = Number(yearStr);
+    clone[year] = { ...entry };
+  });
+  return clone;
+};
 
 const App = () => {
-  const [activeSection, setActiveSection] = useState<ReturnProSection>('financial-data');
+  const [activeSection, setActiveSection] = useState<ReturnProSection>('dcf');
   const [scenarios, setScenarios] = useState<DCFDataSet[]>(() =>
     IFRETURNS_SCENARIOS.map((scenario) => ({
       ...scenario,
       ebitdaData: { ...scenario.ebitdaData },
-      parameters: { ...scenario.parameters }
+      parameters: { ...scenario.parameters },
+      useIncomeStatement: scenario.useIncomeStatement || false,
+      incomeStatementData: cloneIncomeStatementData(scenario.incomeStatementData),
+      incomeStatementAdjustments: cloneIncomeStatementAdjustments(scenario.incomeStatementAdjustments),
+      fiscalYearLabels: scenario.fiscalYearLabels ? { ...scenario.fiscalYearLabels } : undefined
     }))
   );
   const [selectedScenarioId, setSelectedScenarioId] = useState<string>(DEFAULT_IFRETURNS_SCENARIO_ID);
@@ -66,6 +158,69 @@ const App = () => {
     }));
   };
 
+  const handleIncomeStatementToggle = (useIncomeStatement: boolean) => {
+    if (!selectedScenario) {
+      return;
+    }
+    updateScenario(selectedScenario.id, (scenario) => ({
+      ...scenario,
+      useIncomeStatement,
+      // Initialize income statement data if switching to income statement mode
+      incomeStatementData: useIncomeStatement && !scenario.incomeStatementData 
+        ? initializeIncomeStatementData(scenario.ebitdaData)
+        : scenario.incomeStatementData,
+      incomeStatementAdjustments: useIncomeStatement && !scenario.incomeStatementAdjustments
+        ? initializeIncomeStatementAdjustments(scenario.ebitdaData)
+        : scenario.incomeStatementAdjustments
+    }));
+  };
+
+  const handleIncomeStatementChange = (year: number, field: keyof IncomeStatementData[number], value: number) => {
+    if (!selectedScenario) {
+      return;
+    }
+    updateScenario(selectedScenario.id, (scenario) => ({
+      ...scenario,
+      incomeStatementData: (() => {
+        const cloned =
+          cloneIncomeStatementData(scenario.incomeStatementData) ??
+          initializeIncomeStatementData(scenario.ebitdaData);
+        const baseEntry =
+          cloned[year] ?? buildIncomeStatementEntry(scenario.ebitdaData[year] ?? 0);
+        cloned[year] = {
+          ...baseEntry,
+          [field]: value
+        };
+        return cloned;
+      })()
+    }));
+  };
+
+  const handleAdjustmentChange = (year: number, field: keyof IncomeStatementAdjustments[number], value: number) => {
+    if (!selectedScenario) {
+      return;
+    }
+    updateScenario(selectedScenario.id, (scenario) => ({
+      ...scenario,
+      incomeStatementAdjustments: (() => {
+        const cloned =
+          cloneIncomeStatementAdjustments(scenario.incomeStatementAdjustments) ??
+          initializeIncomeStatementAdjustments(scenario.ebitdaData);
+        const baseEntry =
+          cloned[year] ?? {
+            revenueAdjustment: 0,
+            cogsAdjustment: 0,
+            sgaAdjustment: 0
+          };
+        cloned[year] = {
+          ...baseEntry,
+          [field]: value
+        };
+        return cloned;
+      })()
+    }));
+  };
+
   const headerContent =
     scenarios.length > 0 && activeSection !== 'comparison' ? (
       <div className="flex items-center gap-3">
@@ -97,12 +252,13 @@ const App = () => {
           onLabelChange={handleLabelChange}
           onEbitdaChange={handleEbitdaChange}
           onParametersChange={handleParametersChange}
+          onIncomeStatementToggle={handleIncomeStatementToggle}
+          onIncomeStatementChange={handleIncomeStatementChange}
+          onAdjustmentChange={handleAdjustmentChange}
         />
       ) : activeSection === 'dcf' && selectedScenario ? (
         <DCFCalculator
-          scenarioLabel={selectedScenario.label}
-          ebitdaData={selectedScenario.ebitdaData}
-          parameters={selectedScenario.parameters}
+          dataSet={selectedScenario}
         />
       ) : (
         <div className="flex items-center justify-center h-64">

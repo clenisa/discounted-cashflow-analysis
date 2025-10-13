@@ -1,4 +1,4 @@
-import type { DCFDataSet, DCFParameters } from '@/types/dcf';
+import type { DCFDataSet, DCFParameters, IncomeStatementData, IncomeStatementAdjustments } from '@/types/dcf';
 import { Card } from '@/components/common/Card';
 import { InputPanel } from '@/components/dcf/InputPanel';
 
@@ -7,13 +7,19 @@ interface FinancialDataTabProps {
   onLabelChange: (label: string) => void;
   onEbitdaChange: (year: number, value: number) => void;
   onParametersChange: (updated: Partial<DCFParameters>) => void;
+  onIncomeStatementToggle: (useIncomeStatement: boolean) => void;
+  onIncomeStatementChange: (year: number, field: keyof IncomeStatementData[number], value: number) => void;
+  onAdjustmentChange: (year: number, field: keyof IncomeStatementAdjustments[number], value: number) => void;
 }
 
 export const FinancialDataTab = ({
   scenario,
   onLabelChange,
   onEbitdaChange,
-  onParametersChange
+  onParametersChange,
+  onIncomeStatementToggle,
+  onIncomeStatementChange,
+  onAdjustmentChange
 }: FinancialDataTabProps) => (
   <div className="space-y-6 p-6">
     <Card
@@ -55,10 +61,18 @@ export const FinancialDataTab = ({
     </Card>
 
     <InputPanel
+      scenarioId={scenario.id}
       ebitdaData={scenario.ebitdaData}
       parameters={scenario.parameters}
+      useIncomeStatement={scenario.useIncomeStatement}
+      incomeStatementData={scenario.incomeStatementData}
+      incomeStatementAdjustments={scenario.incomeStatementAdjustments}
+      fiscalYearLabels={scenario.fiscalYearLabels}
       onEbitdaChange={onEbitdaChange}
       onParametersChange={onParametersChange}
+      onIncomeStatementToggle={onIncomeStatementToggle}
+      onIncomeStatementChange={onIncomeStatementChange}
+      onAdjustmentChange={onAdjustmentChange}
     />
   </div>
 );

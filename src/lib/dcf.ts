@@ -1,4 +1,5 @@
-import type { DCFParameters, DCFResults, EBITDAData, PresentValueBreakdown } from '@/types/dcf';
+import type { DCFParameters, DCFResults, EBITDAData, PresentValueBreakdown, DCFDataSet } from '@/types/dcf';
+import { getEffectiveEBITDAData } from './incomeStatement';
 
 export const calculateFCF = (ebitda: number, taxRate: number): number => {
   if (taxRate < 0 || taxRate > 100) {
@@ -73,4 +74,23 @@ export const calculateDCF = (
     projectionsPV,
     presentValues
   };
+};
+
+/**
+ * Calculate DCF from a complete DCFDataSet, handling both EBITDA and income statement inputs
+ */
+export const calculateDCFFromDataSet = (dataSet: DCFDataSet): DCFResults => {
+  const effectiveEBITDAData = getEffectiveEBITDAData(
+    dataSet.ebitdaData,
+    dataSet.useIncomeStatement,
+    dataSet.incomeStatementData,
+    dataSet.incomeStatementAdjustments
+  );
+
+  return calculateDCF(
+    effectiveEBITDAData,
+    dataSet.parameters.discountRate,
+    dataSet.parameters.perpetuityRate,
+    dataSet.parameters.corporateTaxRate
+  );
 };

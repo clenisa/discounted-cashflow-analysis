@@ -2,6 +2,26 @@ export interface EBITDAData {
   [year: number]: number;
 }
 
+export interface IncomeStatementData {
+  [year: number]: {
+    revenue: number;
+    cogs: number; // Cost of Goods Sold
+    sga: number;  // Selling, General & Administrative
+    depreciation: number;
+    amortization: number;
+  };
+}
+
+export interface IncomeStatementAdjustments {
+  [year: number]: {
+    revenueAdjustment: number; // Percentage adjustment
+    cogsAdjustment: number;
+    sgaAdjustment: number;
+  };
+}
+
+export type FiscalYearLabels = Record<number, string>;
+
 export interface DCFParameters {
   discountRate: number;
   perpetuityRate: number;
@@ -13,6 +33,10 @@ export interface DCFDataSet {
   label: string;
   ebitdaData: EBITDAData;
   parameters: DCFParameters;
+  useIncomeStatement: boolean; // Toggle between EBITDA input and income statement input
+  incomeStatementData?: IncomeStatementData;
+  incomeStatementAdjustments?: IncomeStatementAdjustments;
+  fiscalYearLabels?: FiscalYearLabels;
 }
 
 export interface PresentValueBreakdown {

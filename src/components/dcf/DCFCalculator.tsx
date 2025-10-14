@@ -1,34 +1,29 @@
-import type { DCFParameters, EBITDAData } from '@/types/dcf';
-import { useDCFCalculation } from '@/hooks/useDCFCalculation';
+import type { DCFDataSet } from '@/types/dcf';
+import { useDCFCalculationFromDataSet } from '@/hooks/useDCFCalculationFromDataSet';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import { DashboardHeader } from './DashboardHeader';
 import { DetailedAnalysisTable } from './DetailedAnalysisTable';
-import { ScenarioSummary } from './ScenarioSummary';
 import { VisualizationPanel } from './VisualizationPanel';
 
 interface DCFCalculatorProps {
-  scenarioLabel: string;
-  ebitdaData: EBITDAData;
-  parameters: DCFParameters;
+  dataSet: DCFDataSet;
 }
 
-export const DCFCalculator = ({ scenarioLabel, ebitdaData, parameters }: DCFCalculatorProps) => {
-  const debouncedEbitdaData = useDebouncedValue(ebitdaData, 180);
-  const debouncedParameters = useDebouncedValue(parameters, 180);
-  const dcfResults = useDCFCalculation(debouncedEbitdaData, debouncedParameters);
+export const DCFCalculator = ({ dataSet }: DCFCalculatorProps) => {
+  const debouncedDataSet = useDebouncedValue(dataSet, 180);
+  const dcfResults = useDCFCalculationFromDataSet(debouncedDataSet);
 
   return (
     <div className="space-y-6 p-6">
       <div className="space-y-4">
         <div>
           <p className="text-xs font-semibold uppercase tracking-wide text-primary">Selected Scenario</p>
-          <h1 className="text-xl font-semibold text-slate-900 sm:text-2xl">{scenarioLabel}</h1>
+          <h1 className="text-xl font-semibold text-slate-900 sm:text-2xl">{dataSet.label}</h1>
         </div>
-        <DashboardHeader results={dcfResults} parameters={parameters} />
+        <DashboardHeader results={dcfResults} parameters={dataSet.parameters} />
       </div>
-      <ScenarioSummary ebitdaData={debouncedEbitdaData} parameters={parameters} />
-      <VisualizationPanel results={dcfResults} parameters={parameters} />
-      <DetailedAnalysisTable results={dcfResults} parameters={parameters} />
+      <DetailedAnalysisTable results={dcfResults} parameters={dataSet.parameters} />
+      <VisualizationPanel results={dcfResults} parameters={dataSet.parameters} />
     </div>
   );
 };

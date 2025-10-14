@@ -1,6 +1,7 @@
 import type { PropsWithChildren, ReactNode } from 'react';
 import { Calculator, Database, ExternalLink, HelpCircle, Search, Settings, GitCompare } from 'lucide-react';
 import { NavItem } from '@/components/navigation/NavItem';
+import { AuthInput } from '@/components/auth/AuthInput';
 
 interface ReturnProLayoutProps extends PropsWithChildren {
   headerContent?: ReactNode;
@@ -113,6 +114,7 @@ export const ReturnProLayout = ({ children, headerContent, activeSection, onSect
           {headerContent}
         </div>
         <div className="flex items-center gap-4">
+          <AuthInput />
           <button
             type="button"
             className="rounded-full border border-slate-200 p-2 text-slate-500 hover:text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"

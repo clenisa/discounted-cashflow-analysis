@@ -1,7 +1,8 @@
 import type { ReactNode } from 'react';
 import clsx from 'clsx';
 import { Info } from 'lucide-react';
-import { formatCurrency, formatPercentage } from '@/utils/format';
+import { formatPercentage } from '@/utils/format';
+import { useCurrency } from '@/contexts/CurrencyContext';
 
 type MetricFormat = 'currency' | 'percentage';
 
@@ -22,6 +23,7 @@ interface MetricCardProps {
 }
 
 export const MetricCard = ({ title, value, format, icon, color = 'blue', info }: MetricCardProps) => {
+  const { formatCurrency } = useCurrency();
   const palette = COLOR_MAP[color] ?? COLOR_MAP.blue;
 
   return (

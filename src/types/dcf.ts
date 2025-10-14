@@ -37,6 +37,7 @@ export interface DCFDataSet {
   incomeStatementData?: IncomeStatementData;
   incomeStatementAdjustments?: IncomeStatementAdjustments;
   fiscalYearLabels?: FiscalYearLabels;
+  baseCurrency?: 'EUR' | 'USD'; // Currency the data is stored in
 }
 
 export interface PresentValueBreakdown {

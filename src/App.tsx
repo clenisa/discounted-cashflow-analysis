@@ -1,9 +1,12 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { DCFCalculator } from '@/components/dcf/DCFCalculator';
 import { FinancialDataTab } from '@/components/financial-data/FinancialDataTab';
 import { ScenarioComparison } from '@/components/comparison/ScenarioComparison';
 import { IFRETURNS_SCENARIOS, DEFAULT_IFRETURNS_SCENARIO_ID } from '@/constants/scenarios';
+import { NVIDIA_SCENARIOS, DEFAULT_NVIDIA_SCENARIO_ID } from '@/constants/nvidiaData';
 import { ReturnProLayout, type ReturnProSection } from '@/layouts/ReturnProLayout';
+import { AuthProvider, useAuth } from '@/contexts/AuthContext';
+import { CurrencyProvider, useCurrency } from '@/contexts/CurrencyContext';
 import type {
   DCFDataSet,
   DCFParameters,
@@ -94,10 +97,15 @@ const cloneIncomeStatementAdjustments = (data?: IncomeStatementAdjustments) => {
   return clone;
 };
 
-const App = () => {
+const AppContent = () => {
+  const { isAuthenticated } = useAuth();
+  const { currencySettings, convertCurrency } = useCurrency();
   const [activeSection, setActiveSection] = useState<ReturnProSection>('dcf');
-  const [scenarios, setScenarios] = useState<DCFDataSet[]>(() =>
-    IFRETURNS_SCENARIOS.map((scenario) => ({
+  
+  // Use different scenarios based on authentication status
+  const [scenarios, setScenarios] = useState<DCFDataSet[]>(() => {
+    const baseScenarios = isAuthenticated ? IFRETURNS_SCENARIOS : NVIDIA_SCENARIOS;
+    return baseScenarios.map((scenario) => ({
       ...scenario,
       ebitdaData: { ...scenario.ebitdaData },
       parameters: { ...scenario.parameters },
@@ -105,9 +113,61 @@ const App = () => {
       incomeStatementData: cloneIncomeStatementData(scenario.incomeStatementData),
       incomeStatementAdjustments: cloneIncomeStatementAdjustments(scenario.incomeStatementAdjustments),
       fiscalYearLabels: scenario.fiscalYearLabels ? { ...scenario.fiscalYearLabels } : undefined
-    }))
+    }));
+  });
+  
+  const [selectedScenarioId, setSelectedScenarioId] = useState<string>(
+    isAuthenticated ? DEFAULT_IFRETURNS_SCENARIO_ID : DEFAULT_NVIDIA_SCENARIO_ID
   );
-  const [selectedScenarioId, setSelectedScenarioId] = useState<string>(DEFAULT_IFRETURNS_SCENARIO_ID);
+
+  // Update scenarios when authentication status changes
+  useEffect(() => {
+    const baseScenarios = isAuthenticated ? IFRETURNS_SCENARIOS : NVIDIA_SCENARIOS;
+    const newScenarios = baseScenarios.map((scenario) => {
+      const baseCurrency = scenario.baseCurrency || (isAuthenticated ? 'EUR' : 'USD');
+      const targetCurrency = currencySettings.activeCurrency;
+      
+      // Convert currency if needed
+      if (baseCurrency !== targetCurrency) {
+        const exchangeRate = convertCurrency(1, baseCurrency, targetCurrency);
+        return {
+          ...scenario,
+          ebitdaData: Object.fromEntries(
+            Object.entries(scenario.ebitdaData).map(([year, value]) => [year, value * exchangeRate])
+          ),
+          incomeStatementData: scenario.incomeStatementData ? 
+            Object.fromEntries(
+              Object.entries(scenario.incomeStatementData).map(([year, data]) => [
+                year,
+                {
+                  revenue: data.revenue * exchangeRate,
+                  cogs: data.cogs * exchangeRate,
+                  sga: data.sga * exchangeRate,
+                  depreciation: data.depreciation * exchangeRate,
+                  amortization: data.amortization * exchangeRate
+                }
+              ])
+            ) : undefined,
+          baseCurrency: targetCurrency
+        };
+      }
+      
+      return {
+        ...scenario,
+        ebitdaData: { ...scenario.ebitdaData },
+        parameters: { ...scenario.parameters },
+        useIncomeStatement: scenario.useIncomeStatement || false,
+        incomeStatementData: cloneIncomeStatementData(scenario.incomeStatementData),
+        incomeStatementAdjustments: cloneIncomeStatementAdjustments(scenario.incomeStatementAdjustments),
+        fiscalYearLabels: scenario.fiscalYearLabels ? { ...scenario.fiscalYearLabels } : undefined
+      };
+    });
+    setScenarios(newScenarios);
+    
+    // Update selected scenario ID
+    const newDefaultId = isAuthenticated ? DEFAULT_IFRETURNS_SCENARIO_ID : DEFAULT_NVIDIA_SCENARIO_ID;
+    setSelectedScenarioId(newDefaultId);
+  }, [isAuthenticated, currencySettings.activeCurrency, convertCurrency]);
 
   const selectedScenario = useMemo(() => {
     if (scenarios.length === 0) {
@@ -268,6 +328,16 @@ const App = () => {
         </div>
       )}
     </ReturnProLayout>
+  );
+};
+
+const App = () => {
+  return (
+    <AuthProvider>
+      <CurrencyProvider>
+        <AppContent />
+      </CurrencyProvider>
+    </AuthProvider>
   );
 };
 

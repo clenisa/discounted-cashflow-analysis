@@ -26,7 +26,8 @@ const createScenario = ({
   useIncomeStatement: false,
   incomeStatementData: undefined,
   incomeStatementAdjustments: undefined,
-  fiscalYearLabels: { ...DEFAULT_FISCAL_YEAR_LABELS }
+  fiscalYearLabels: { ...DEFAULT_FISCAL_YEAR_LABELS },
+  baseCurrency: 'EUR'
 });
 
 export const IFRETURNS_SCENARIOS: DCFDataSet[] = [

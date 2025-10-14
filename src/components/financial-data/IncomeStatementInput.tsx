@@ -2,8 +2,8 @@ import { useState, useEffect } from 'react';
 import { Card } from '@/components/common/Card';
 import { calculateEBITDA } from '@/lib/incomeStatement';
 import type { IncomeStatementData, IncomeStatementAdjustments, FiscalYearLabels } from '@/types/dcf';
-import { formatCurrency } from '@/utils/format';
 import { sanitizeNumericInput, parseSanitizedNumber } from '@/utils/currencyInput';
+import { useCurrency } from '@/contexts/CurrencyContext';
 
 interface IncomeStatementInputProps {
   scenarioId: string;
@@ -22,6 +22,7 @@ export const IncomeStatementInput = ({
   onIncomeStatementChange,
   onAdjustmentChange
 }: IncomeStatementInputProps) => {
+  const { formatCurrency } = useCurrency();
   const [showAdjustments, setShowAdjustments] = useState(false);
 
   const sortedYears = Object.keys(incomeStatementData)

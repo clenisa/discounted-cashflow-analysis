@@ -1,6 +1,8 @@
 import type { DCFDataSet, DCFParameters, IncomeStatementData, IncomeStatementAdjustments } from '@/types/dcf';
 import { Card } from '@/components/common/Card';
 import { InputPanel } from '@/components/dcf/InputPanel';
+import { CurrencySelector } from '@/components/currency/CurrencySelector';
+import { ExchangeRateManager } from '@/components/currency/ExchangeRateManager';
 
 interface FinancialDataTabProps {
   scenario: DCFDataSet;
@@ -43,7 +45,7 @@ export const FinancialDataTab = ({
             Pick a descriptive name for this dataset. It appears in the DCF calculator selector.
           </p>
         </div>
-        <dl className="grid gap-3 text-sm text-slate-600 sm:grid-cols-3">
+        <dl className="grid gap-3 text-sm text-slate-600 sm:grid-cols-4">
           <div>
             <dt className="font-medium text-slate-700">Scenario ID</dt>
             <dd className="font-mono text-xs text-slate-500">{scenario.id}</dd>
@@ -56,9 +58,34 @@ export const FinancialDataTab = ({
             <dt className="font-medium text-slate-700">Perpetual Growth</dt>
             <dd>{scenario.parameters.perpetuityRate.toFixed(1)}%</dd>
           </div>
+          <div>
+            <dt className="font-medium text-slate-700">Base Currency</dt>
+            <dd className="font-mono text-xs text-slate-500">{scenario.baseCurrency || 'EUR'}</dd>
+          </div>
         </dl>
       </div>
     </Card>
+
+    <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+      <div className="space-y-6">
+        <Card
+          title="Currency Settings"
+          subtitle="Select display currency and manage exchange rates"
+        >
+          <div className="space-y-4">
+            <CurrencySelector />
+            <div className="text-xs text-slate-500">
+              <p>Data will be automatically converted based on current exchange rates.</p>
+              <p>Base currency for this scenario: <span className="font-mono">{scenario.baseCurrency || 'EUR'}</span></p>
+            </div>
+          </div>
+        </Card>
+      </div>
+      
+      <div className="space-y-6">
+        <ExchangeRateManager />
+      </div>
+    </div>
 
     <InputPanel
       scenarioId={scenario.id}

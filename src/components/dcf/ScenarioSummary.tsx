@@ -1,6 +1,6 @@
 import { Card } from '@/components/common/Card';
 import type { DCFParameters, EBITDAData } from '@/types/dcf';
-import { formatCurrency } from '@/utils/format';
+import { useCurrency } from '@/contexts/CurrencyContext';
 
 interface ScenarioSummaryProps {
   parameters: DCFParameters;
@@ -8,6 +8,7 @@ interface ScenarioSummaryProps {
 }
 
 export const ScenarioSummary = ({ parameters, ebitdaData }: ScenarioSummaryProps) => {
+  const { formatCurrency } = useCurrency();
   const sortedEntries = Object.entries(ebitdaData)
     .map(([year, value]) => ({ year: Number(year), value }))
     .sort((a, b) => a.year - b.year);

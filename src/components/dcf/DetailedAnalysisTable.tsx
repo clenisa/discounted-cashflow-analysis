@@ -1,6 +1,6 @@
 import { Card } from '@/components/common/Card';
 import type { DCFParameters, DCFResults } from '@/types/dcf';
-import { formatCurrency } from '@/utils/format';
+import { useCurrency } from '@/contexts/CurrencyContext';
 
 interface DetailedAnalysisTableProps {
   results: DCFResults;
@@ -8,6 +8,7 @@ interface DetailedAnalysisTableProps {
 }
 
 export const DetailedAnalysisTable = ({ results, parameters }: DetailedAnalysisTableProps) => {
+  const { formatCurrency } = useCurrency();
   const wacc = parameters.discountRate / 100;
   const terminalDiscountFactor = 1 / Math.pow(1 + wacc, results.presentValues.length);
 

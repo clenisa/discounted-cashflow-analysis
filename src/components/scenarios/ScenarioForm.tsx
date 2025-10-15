@@ -269,19 +269,71 @@ export const ScenarioForm: React.FC<ScenarioFormProps> = ({
       setLoading(true);
       setError(null);
 
+      // Calculate adjusted values for adjustment matrix scenarios
+      let finalEbitdaData = formData.ebitdaData || {};
+      let finalIncomeStatementData = formData.incomeStatementData || {};
+      let finalDiscountRate = formData.discountRate;
+      let finalPerpetuityRate = formData.perpetuityRate;
+      let finalCorporateTaxRate = formData.corporateTaxRate;
+
+      if (formData.inputMode === 'adjustment-matrix' && baseScenario) {
+        // Apply parameter adjustments
+        if (formData.parameterAdjustments) {
+          finalDiscountRate = (baseScenario.discountRate || model.discountRate) * (1 + (formData.parameterAdjustments.discountRateAdjustment || 0) / 100);
+          finalPerpetuityRate = (baseScenario.perpetuityRate || model.perpetuityRate) * (1 + (formData.parameterAdjustments.perpetuityRateAdjustment || 0) / 100);
+          finalCorporateTaxRate = (baseScenario.corporateTaxRate || model.corporateTaxRate) * (1 + (formData.parameterAdjustments.corporateTaxRateAdjustment || 0) / 100);
+        }
+
+        // Apply financial data adjustments
+        if (baseScenario.ebitdaData && Object.keys(baseScenario.ebitdaData).length > 0) {
+          // Calculate adjusted EBITDA values
+          finalEbitdaData = {};
+          Object.keys(baseScenario.ebitdaData).forEach(year => {
+            const yearNum = parseInt(year);
+            const baseEbitda = baseScenario.ebitdaData?.[yearNum] || 0;
+            const adjustment = formData.incomeStatementAdjustments?.[yearNum]?.revenueAdjustment || 0;
+            finalEbitdaData[yearNum] = baseEbitda * (1 + adjustment / 100);
+          });
+        } else if (baseScenario.incomeStatementData && Object.keys(baseScenario.incomeStatementData).length > 0) {
+          // Calculate adjusted income statement values
+          finalIncomeStatementData = {};
+          Object.keys(baseScenario.incomeStatementData).forEach(year => {
+            const yearNum = parseInt(year);
+            const baseData = baseScenario.incomeStatementData?.[yearNum];
+            const adjustments = formData.incomeStatementAdjustments?.[yearNum] || {
+              revenueAdjustment: 0,
+              cogsAdjustment: 0,
+              sgaAdjustment: 0
+            };
+            
+            if (baseData) {
+              finalIncomeStatementData[yearNum] = {
+                revenue: baseData.revenue * (1 + (adjustments.revenueAdjustment || 0) / 100),
+                cogs: baseData.cogs * (1 + (adjustments.cogsAdjustment || 0) / 100),
+                sga: baseData.sga * (1 + (adjustments.sgaAdjustment || 0) / 100),
+                depreciation: baseData.depreciation,
+                amortization: baseData.amortization
+              };
+            }
+          });
+        }
+      }
+
       const scenarioData: Omit<DCFScenario, 'id'> = {
         userId: user.id,
         modelId: model.id!,
         scenarioName: formData.scenarioName,
         description: formData.description,
-        discountRate: formData.discountRate,
-        perpetuityRate: formData.perpetuityRate,
-        corporateTaxRate: formData.corporateTaxRate,
-        ebitdaData: formData.ebitdaData,
-        incomeStatementData: formData.incomeStatementData,
+        discountRate: finalDiscountRate,
+        perpetuityRate: finalPerpetuityRate,
+        corporateTaxRate: finalCorporateTaxRate,
+        ebitdaData: finalEbitdaData,
+        incomeStatementData: finalIncomeStatementData,
         incomeStatementAdjustments: formData.incomeStatementAdjustments,
         inputMode: formData.inputMode,
         baseCurrency: model.baseCurrency || 'EUR',
+        baseScenarioId: formData.baseScenarioId,
+        parameterAdjustments: formData.parameterAdjustments,
         isBaseScenario: formData.isBaseScenario,
         sortOrder: scenario?.sortOrder || 0,
         createdAt: scenario?.createdAt || new Date().toISOString(),

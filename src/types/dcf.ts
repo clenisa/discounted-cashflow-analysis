@@ -77,8 +77,16 @@ export interface DCFModel {
   fiscalYearLabels?: FiscalYearLabels;
   
   // Configuration
-  useIncomeStatement: boolean;
+  inputMode: 'ebitda' | 'income-statement' | 'adjustment-matrix';
   baseCurrency: 'EUR' | 'USD';
+  
+  // Adjustment Matrix specific fields
+  baseScenarioId?: string; // Reference to another scenario for adjustments
+  parameterAdjustments?: {
+    discountRateAdjustment?: number; // Percentage adjustment to base scenario's discount rate
+    perpetuityRateAdjustment?: number; // Percentage adjustment to base scenario's perpetuity rate
+    corporateTaxRateAdjustment?: number; // Percentage adjustment to base scenario's tax rate
+  };
   
   // Calculated Results (cached)
   enterpriseValue?: number;
@@ -114,8 +122,16 @@ export interface DCFScenario {
   ebitdaData?: EBITDAData;
   incomeStatementData?: IncomeStatementData;
   incomeStatementAdjustments?: IncomeStatementAdjustments;
-  useIncomeStatement?: boolean;
+  inputMode?: 'ebitda' | 'income-statement' | 'adjustment-matrix';
   baseCurrency?: 'EUR' | 'USD';
+  
+  // Adjustment Matrix specific fields
+  baseScenarioId?: string; // Reference to another scenario for adjustments
+  parameterAdjustments?: {
+    discountRateAdjustment?: number; // Percentage adjustment to base scenario's discount rate
+    perpetuityRateAdjustment?: number; // Percentage adjustment to base scenario's perpetuity rate
+    corporateTaxRateAdjustment?: number; // Percentage adjustment to base scenario's tax rate
+  };
   
   // Calculated results for this scenario
   enterpriseValue?: number;

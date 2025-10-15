@@ -33,12 +33,20 @@ export const ScenarioForm: React.FC<ScenarioFormProps> = ({
     ebitdaData: scenario?.ebitdaData || { [new Date().getFullYear()]: 0 },
     incomeStatementData: scenario?.incomeStatementData,
     incomeStatementAdjustments: scenario?.incomeStatementAdjustments,
-    useIncomeStatement: scenario?.useIncomeStatement || false,
+    inputMode: scenario?.inputMode || 'ebitda' as 'ebitda' | 'income-statement' | 'adjustment-matrix',
+    baseScenarioId: scenario?.baseScenarioId,
+    parameterAdjustments: scenario?.parameterAdjustments || {
+      discountRateAdjustment: 0,
+      perpetuityRateAdjustment: 0,
+      corporateTaxRateAdjustment: 0
+    },
     isBaseScenario: scenario?.isBaseScenario || false
   });
 
   const [ebitdaYears, setEbitdaYears] = useState<number[]>([]);
   const [csvError, setCsvError] = useState<string | null>(null);
+  const [availableScenarios, setAvailableScenarios] = useState<DCFScenario[]>([]);
+  const [baseScenario, setBaseScenario] = useState<DCFScenario | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -47,6 +55,36 @@ export const ScenarioForm: React.FC<ScenarioFormProps> = ({
     const years = Array.from({ length: 6 }, (_, i) => currentYear + i);
     setEbitdaYears(years);
   }, []);
+
+  useEffect(() => {
+    // Load available scenarios for adjustment matrix
+    const loadScenarios = async () => {
+      if (formData.inputMode === 'adjustment-matrix') {
+        try {
+          const scenarios = await dataService.listScenarios(model.id!);
+          setAvailableScenarios(scenarios.filter(s => s.id !== scenario?.id)); // Exclude current scenario
+        } catch (error) {
+          console.error('Failed to load scenarios:', error);
+        }
+      }
+    };
+    loadScenarios();
+  }, [formData.inputMode, model.id, scenario?.id, dataService]);
+
+  useEffect(() => {
+    // Load base scenario data when selected
+    const loadBaseScenario = async () => {
+      if (formData.baseScenarioId && formData.inputMode === 'adjustment-matrix') {
+        try {
+          const baseScenarioData = await dataService.loadScenario(formData.baseScenarioId);
+          setBaseScenario(baseScenarioData);
+        } catch (error) {
+          console.error('Failed to load base scenario:', error);
+        }
+      }
+    };
+    loadBaseScenario();
+  }, [formData.baseScenarioId, formData.inputMode, dataService]);
 
   const parseCSV = (csvText: string, isIncomeStatement: boolean = false) => {
     const lines = csvText.trim().split('\n');
@@ -116,7 +154,7 @@ export const ScenarioForm: React.FC<ScenarioFormProps> = ({
     reader.onload = (e) => {
       try {
         const csvText = e.target?.result as string;
-        const isIncomeStatement = formData.useIncomeStatement;
+        const isIncomeStatement = formData.inputMode === 'income-statement';
         
         if (isIncomeStatement) {
           const { incomeStatementData, adjustments } = parseCSV(csvText, true);
@@ -143,7 +181,7 @@ export const ScenarioForm: React.FC<ScenarioFormProps> = ({
   };
 
   const downloadTemplate = () => {
-    const isIncomeStatement = formData.useIncomeStatement;
+    const isIncomeStatement = formData.inputMode === 'income-statement';
     let csvContent: string;
     
     if (isIncomeStatement) {
@@ -242,7 +280,7 @@ export const ScenarioForm: React.FC<ScenarioFormProps> = ({
         ebitdaData: formData.ebitdaData,
         incomeStatementData: formData.incomeStatementData,
         incomeStatementAdjustments: formData.incomeStatementAdjustments,
-        useIncomeStatement: formData.useIncomeStatement,
+        inputMode: formData.inputMode,
         baseCurrency: model.baseCurrency || 'EUR',
         isBaseScenario: formData.isBaseScenario,
         sortOrder: scenario?.sortOrder || 0,
@@ -395,36 +433,93 @@ export const ScenarioForm: React.FC<ScenarioFormProps> = ({
           </div>
         </div>
 
-        {/* Input Mode Toggle */}
+        {/* Input Mode Selection */}
         <div className="border-t pt-6">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h4 className="text-md font-medium text-gray-900">Financial Data Input</h4>
-              <p className="text-sm text-gray-500">
-                Choose how to input financial data for this scenario
-              </p>
-            </div>
-            <button
-              type="button"
-              onClick={() => setFormData(prev => ({ ...prev, useIncomeStatement: !prev.useIncomeStatement }))}
-              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                formData.useIncomeStatement ? 'bg-blue-600' : 'bg-gray-300'
-              }`}
-            >
-              <span
-                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                  formData.useIncomeStatement ? 'translate-x-6' : 'translate-x-1'
-                }`}
-              />
-            </button>
+          <div className="mb-4">
+            <h4 className="text-md font-medium text-gray-900">Financial Data Input Mode</h4>
+            <p className="text-sm text-gray-500">
+              Choose how to input financial data for this scenario
+            </p>
           </div>
-          <div className="flex space-x-4 text-sm">
-            <span className={!formData.useIncomeStatement ? 'font-medium text-blue-600' : 'text-gray-500'}>
-              EBITDA Direct
-            </span>
-            <span className={formData.useIncomeStatement ? 'font-medium text-blue-600' : 'text-gray-500'}>
-              Income Statement
-            </span>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {/* EBITDA Mode */}
+            <div 
+              className={`p-4 border-2 rounded-lg cursor-pointer transition-colors ${
+                formData.inputMode === 'ebitda' 
+                  ? 'border-blue-500 bg-blue-50' 
+                  : 'border-gray-200 hover:border-gray-300'
+              }`}
+              onClick={() => setFormData(prev => ({ ...prev, inputMode: 'ebitda' }))}
+            >
+              <div className="flex items-center gap-3">
+                <div className={`w-4 h-4 rounded-full border-2 ${
+                  formData.inputMode === 'ebitda' 
+                    ? 'border-blue-500 bg-blue-500' 
+                    : 'border-gray-300'
+                }`}>
+                  {formData.inputMode === 'ebitda' && (
+                    <div className="w-2 h-2 bg-white rounded-full m-0.5"></div>
+                  )}
+                </div>
+                <div>
+                  <h5 className="font-medium text-gray-900">EBITDA Direct</h5>
+                  <p className="text-sm text-gray-500">Input EBITDA values directly</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Income Statement Mode */}
+            <div 
+              className={`p-4 border-2 rounded-lg cursor-pointer transition-colors ${
+                formData.inputMode === 'income-statement' 
+                  ? 'border-blue-500 bg-blue-50' 
+                  : 'border-gray-200 hover:border-gray-300'
+              }`}
+              onClick={() => setFormData(prev => ({ ...prev, inputMode: 'income-statement' }))}
+            >
+              <div className="flex items-center gap-3">
+                <div className={`w-4 h-4 rounded-full border-2 ${
+                  formData.inputMode === 'income-statement' 
+                    ? 'border-blue-500 bg-blue-500' 
+                    : 'border-gray-300'
+                }`}>
+                  {formData.inputMode === 'income-statement' && (
+                    <div className="w-2 h-2 bg-white rounded-full m-0.5"></div>
+                  )}
+                </div>
+                <div>
+                  <h5 className="font-medium text-gray-900">Income Statement</h5>
+                  <p className="text-sm text-gray-500">Input detailed income statement</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Adjustment Matrix Mode */}
+            <div 
+              className={`p-4 border-2 rounded-lg cursor-pointer transition-colors ${
+                formData.inputMode === 'adjustment-matrix' 
+                  ? 'border-blue-500 bg-blue-50' 
+                  : 'border-gray-200 hover:border-gray-300'
+              }`}
+              onClick={() => setFormData(prev => ({ ...prev, inputMode: 'adjustment-matrix' }))}
+            >
+              <div className="flex items-center gap-3">
+                <div className={`w-4 h-4 rounded-full border-2 ${
+                  formData.inputMode === 'adjustment-matrix' 
+                    ? 'border-blue-500 bg-blue-500' 
+                    : 'border-gray-300'
+                }`}>
+                  {formData.inputMode === 'adjustment-matrix' && (
+                    <div className="w-2 h-2 bg-white rounded-full m-0.5"></div>
+                  )}
+                </div>
+                <div>
+                  <h5 className="font-medium text-gray-900">Adjustment Matrix</h5>
+                  <p className="text-sm text-gray-500">Adjust from base scenario</p>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -432,7 +527,7 @@ export const ScenarioForm: React.FC<ScenarioFormProps> = ({
         <div className="border-t pt-6">
           <div className="flex items-center justify-between mb-4">
             <h4 className="text-md font-medium text-gray-900">
-              {formData.useIncomeStatement ? 'Income Statement Data' : 'EBITDA Projections'}
+              {formData.inputMode === 'income-statement' ? 'Income Statement Data' : formData.inputMode === 'adjustment-matrix' ? 'Adjustment Matrix' : 'EBITDA Projections'}
             </h4>
             <div className="flex items-center gap-2">
               <button
@@ -466,7 +561,7 @@ export const ScenarioForm: React.FC<ScenarioFormProps> = ({
               <FileText size={16} className="text-blue-600 mt-0.5" />
               <div className="text-sm text-blue-800">
                 <p className="font-medium">CSV Format Requirements:</p>
-                {formData.useIncomeStatement ? (
+                {formData.inputMode === 'income-statement' ? (
                   <ul className="mt-1 list-disc list-inside space-y-1">
                     <li>Required columns: Year, Revenue, COGS, SGA, Depreciation, Amortization</li>
                     <li>First row must contain headers (case insensitive)</li>
@@ -493,7 +588,58 @@ export const ScenarioForm: React.FC<ScenarioFormProps> = ({
             className="hidden"
           />
 
-          {!formData.useIncomeStatement ? (
+          {/* Base Scenario Selection for Adjustment Matrix */}
+          {formData.inputMode === 'adjustment-matrix' && (
+            <div className="mb-6 p-4 bg-gray-50 border border-gray-200 rounded-lg">
+              <h5 className="text-sm font-medium text-gray-900 mb-3">Base Scenario Selection</h5>
+              <div className="space-y-3">
+                <div>
+                  <label htmlFor="baseScenario" className="block text-sm font-medium text-gray-700 mb-1">
+                    Select Base Scenario
+                  </label>
+                  <select
+                    id="baseScenario"
+                    value={formData.baseScenarioId || ''}
+                    onChange={(e) => setFormData(prev => ({ ...prev, baseScenarioId: e.target.value }))}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  >
+                    <option value="">Select a base scenario...</option>
+                    {availableScenarios.map(scenario => (
+                      <option key={scenario.id} value={scenario.id}>
+                        {scenario.scenarioName}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                
+                {baseScenario && (
+                  <div className="p-3 bg-white border border-gray-200 rounded-md">
+                    <h6 className="text-sm font-medium text-gray-900 mb-2">Base Scenario Details</h6>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                      <div>
+                        <span className="text-gray-500">Discount Rate:</span>
+                        <span className="ml-1 font-medium">{baseScenario.discountRate || model.discountRate}%</span>
+                      </div>
+                      <div>
+                        <span className="text-gray-500">Perpetuity Rate:</span>
+                        <span className="ml-1 font-medium">{baseScenario.perpetuityRate || model.perpetuityRate}%</span>
+                      </div>
+                      <div>
+                        <span className="text-gray-500">Tax Rate:</span>
+                        <span className="ml-1 font-medium">{baseScenario.corporateTaxRate || model.corporateTaxRate}%</span>
+                      </div>
+                      <div>
+                        <span className="text-gray-500">Input Mode:</span>
+                        <span className="ml-1 font-medium capitalize">{baseScenario.inputMode || 'ebitda'}</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {formData.inputMode === 'ebitda' ? (
             // EBITDA Input
             <div className="space-y-3">
               {ebitdaYears.map(year => (

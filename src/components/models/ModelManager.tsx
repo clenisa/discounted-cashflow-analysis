@@ -58,7 +58,7 @@ export const ModelManager: React.FC<ModelManagerProps> = ({
         perpetuityRate: modelData.perpetuityRate || 4,
         corporateTaxRate: modelData.corporateTaxRate || 25,
         ebitdaData: modelData.ebitdaData || {},
-        useIncomeStatement: modelData.useIncomeStatement || false,
+        inputMode: modelData.inputMode || 'ebitda',
         baseCurrency: modelData.baseCurrency || 'EUR',
         isTemplate: false,
         isPublic: false,

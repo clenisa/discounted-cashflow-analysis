@@ -20,7 +20,7 @@ const AppContent = () => {
         <div className="flex items-center gap-3">
           {isAuthenticated ? (
             <div className="text-sm text-gray-600">
-              Welcome to ReturnPro Analytics
+              Sign in to access Corporate Finance features
             </div>
           ) : (
             <div className="text-sm text-gray-600">
@@ -31,7 +31,12 @@ const AppContent = () => {
         
         <div className="flex items-center gap-3">
           {isAuthenticated ? (
-            <UserProfile />
+            <div className="flex flex-col items-end">
+              <div className="text-sm text-gray-600 mb-1">
+                Welcome to ReturnPro Analytics
+              </div>
+              <UserProfile />
+            </div>
           ) : (
             <div className="flex items-center gap-2">
               <button

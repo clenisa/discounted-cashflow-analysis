@@ -1,5 +1,5 @@
 import type { PropsWithChildren, ReactNode } from 'react';
-import { Calculator, Database, ExternalLink, HelpCircle, Search, Settings, GitCompare } from 'lucide-react';
+import { Calculator, Database, ExternalLink, HelpCircle, Search, Settings, GitCompare, Building2 } from 'lucide-react';
 import { NavItem } from '@/components/navigation/NavItem';
 import { AuthInput } from '@/components/auth/AuthInput';
 
@@ -24,10 +24,15 @@ const sections: Array<{ id: ReturnProSection; label: string; icon: ReactNode }> 
     id: 'comparison',
     label: 'Scenario Comparison',
     icon: <GitCompare size={18} />
+  },
+  {
+    id: 'corporate-finance',
+    label: 'Corporate Finance',
+    icon: <Building2 size={18} />
   }
 ];
 
-export type ReturnProSection = 'dcf' | 'financial-data' | 'comparison';
+export type ReturnProSection = 'dcf' | 'financial-data' | 'comparison' | 'corporate-finance';
 
 export const ReturnProLayout = ({ children, headerContent, activeSection, onSectionChange }: ReturnProLayoutProps) => (
   <div className="flex h-screen bg-slate-50 text-slate-900">

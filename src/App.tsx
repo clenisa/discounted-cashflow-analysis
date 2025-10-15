@@ -7,6 +7,9 @@ import { NVIDIA_SCENARIOS, DEFAULT_NVIDIA_SCENARIO_ID } from '@/constants/nvidia
 import { ReturnProLayout, type ReturnProSection } from '@/layouts/ReturnProLayout';
 import { AuthProvider, useAuth } from '@/contexts/AuthContext';
 import { CurrencyProvider, useCurrency } from '@/contexts/CurrencyContext';
+import { AuthModal } from '@/components/auth/AuthModal';
+import { UserProfile } from '@/components/auth/UserProfile';
+import { CorporateFinanceDashboard } from '@/components/corporate-finance/CorporateFinanceDashboard';
 import type {
   DCFDataSet,
   DCFParameters,
@@ -98,9 +101,13 @@ const cloneIncomeStatementAdjustments = (data?: IncomeStatementAdjustments) => {
 };
 
 const AppContent = () => {
-  const { isAuthenticated } = useAuth();
+  const { user, loading } = useAuth();
   const { currencySettings, convertCurrency } = useCurrency();
   const [activeSection, setActiveSection] = useState<ReturnProSection>('dcf');
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [authModalMode, setAuthModalMode] = useState<'login' | 'signup'>('login');
+  
+  const isAuthenticated = !!user;
   
   // Use different scenarios based on authentication status
   const [scenarios, setScenarios] = useState<DCFDataSet[]>(() => {
@@ -283,51 +290,103 @@ const AppContent = () => {
 
   const headerContent =
     scenarios.length > 0 && activeSection !== 'comparison' ? (
-      <div className="flex items-center gap-3">
-        <label htmlFor="scenario-select" className="sr-only">
-          Choose scenario
-        </label>
-        <select
-          id="scenario-select"
-          value={selectedScenarioId}
-          onChange={(event) => setSelectedScenarioId(event.target.value)}
-          className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 shadow-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
-        >
-          {scenarios.map((scenario) => (
-            <option key={scenario.id} value={scenario.id}>
-              {scenario.label}
-            </option>
-          ))}
-        </select>
+      <div className="flex items-center justify-between w-full">
+        <div className="flex items-center gap-3">
+          <label htmlFor="scenario-select" className="sr-only">
+            Choose scenario
+          </label>
+          <select
+            id="scenario-select"
+            value={selectedScenarioId}
+            onChange={(event) => setSelectedScenarioId(event.target.value)}
+            className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 shadow-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+          >
+            {scenarios.map((scenario) => (
+              <option key={scenario.id} value={scenario.id}>
+                {scenario.label}
+              </option>
+            ))}
+          </select>
+        </div>
+        
+        <div className="flex items-center gap-3">
+          {isAuthenticated ? (
+            <UserProfile />
+          ) : (
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => {
+                  setAuthModalMode('login');
+                  setShowAuthModal(true);
+                }}
+                className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900"
+              >
+                Sign In
+              </button>
+              <button
+                onClick={() => {
+                  setAuthModalMode('signup');
+                  setShowAuthModal(true);
+                }}
+                className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+              >
+                Sign Up
+              </button>
+            </div>
+          )}
+        </div>
       </div>
     ) : null;
 
-  return (
-    <ReturnProLayout activeSection={activeSection} onSectionChange={setActiveSection} headerContent={headerContent}>
-      {activeSection === 'comparison' ? (
-        <ScenarioComparison scenarios={scenarios} />
-      ) : activeSection === 'financial-data' && selectedScenario ? (
-        <FinancialDataTab
-          scenario={selectedScenario}
-          onLabelChange={handleLabelChange}
-          onEbitdaChange={handleEbitdaChange}
-          onParametersChange={handleParametersChange}
-          onIncomeStatementToggle={handleIncomeStatementToggle}
-          onIncomeStatementChange={handleIncomeStatementChange}
-          onAdjustmentChange={handleAdjustmentChange}
-        />
-      ) : activeSection === 'dcf' && selectedScenario ? (
-        <DCFCalculator
-          dataSet={selectedScenario}
-        />
-      ) : (
-        <div className="flex items-center justify-center h-64">
-          <div className="text-center">
-            <p className="text-slate-500">Please select a scenario to view details.</p>
-          </div>
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading...</p>
         </div>
+      </div>
+    );
+  }
+
+  return (
+    <>
+      {activeSection === 'corporate-finance' ? (
+        <CorporateFinanceDashboard />
+      ) : (
+        <ReturnProLayout activeSection={activeSection} onSectionChange={setActiveSection} headerContent={headerContent}>
+          {activeSection === 'comparison' ? (
+            <ScenarioComparison scenarios={scenarios} />
+          ) : activeSection === 'financial-data' && selectedScenario ? (
+            <FinancialDataTab
+              scenario={selectedScenario}
+              onLabelChange={handleLabelChange}
+              onEbitdaChange={handleEbitdaChange}
+              onParametersChange={handleParametersChange}
+              onIncomeStatementToggle={handleIncomeStatementToggle}
+              onIncomeStatementChange={handleIncomeStatementChange}
+              onAdjustmentChange={handleAdjustmentChange}
+            />
+          ) : activeSection === 'dcf' && selectedScenario ? (
+            <DCFCalculator
+              dataSet={selectedScenario}
+            />
+          ) : (
+            <div className="flex items-center justify-center h-64">
+              <div className="text-center">
+                <p className="text-slate-500">Please select a scenario to view details.</p>
+              </div>
+            </div>
+          )}
+        </ReturnProLayout>
       )}
-    </ReturnProLayout>
+      
+      <AuthModal
+        isOpen={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
+        initialMode={authModalMode}
+      />
+    </>
   );
 };
 

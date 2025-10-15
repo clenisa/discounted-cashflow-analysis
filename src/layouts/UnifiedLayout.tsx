@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { Calculator, Database, ExternalLink, HelpCircle, Search, Settings, GitCompare, Building2, Menu, X } from 'lucide-react';
+import { ExternalLink, HelpCircle, Building2, Menu, X } from 'lucide-react';
 import { NavItem } from '@/components/navigation/NavItem';
 import { UserProfileHeader } from '@/components/user/UserProfileHeader';
 import { Breadcrumb } from '@/components/navigation/Breadcrumb';
@@ -173,15 +173,6 @@ export const UnifiedLayout: React.FC<UnifiedLayoutProps> = ({
               </button>
             )}
 
-            {/* Search Bar */}
-            <div className="hidden items-center gap-2 rounded-full border border-slate-200 bg-slate-100 px-3 py-2 text-sm text-slate-500 focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20 md:flex">
-              <Search size={16} className="text-slate-400" />
-              <input
-                type="search"
-                placeholder="Search models, companies..."
-                className="bg-transparent outline-none placeholder:text-slate-400"
-              />
-            </div>
             
             {/* Mobile Section Selector */}
             {showSidebar && (
@@ -209,16 +200,6 @@ export const UnifiedLayout: React.FC<UnifiedLayoutProps> = ({
             {headerContent}
           </div>
           
-          {/* Settings Button */}
-          <div className="flex items-center gap-4">
-            <button
-              type="button"
-              className="rounded-full border border-slate-200 p-2 text-slate-500 hover:text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
-              aria-label="Settings"
-            >
-              <Settings size={18} />
-            </button>
-          </div>
         </header>
 
         {/* Breadcrumbs */}

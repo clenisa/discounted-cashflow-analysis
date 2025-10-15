@@ -114,6 +114,8 @@ export interface DCFScenario {
   ebitdaData?: EBITDAData;
   incomeStatementData?: IncomeStatementData;
   incomeStatementAdjustments?: IncomeStatementAdjustments;
+  useIncomeStatement?: boolean;
+  baseCurrency?: 'EUR' | 'USD';
   
   // Calculated results for this scenario
   enterpriseValue?: number;

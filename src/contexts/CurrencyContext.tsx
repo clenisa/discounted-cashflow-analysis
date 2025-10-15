@@ -39,7 +39,7 @@ export const CurrencyProvider: React.FC<CurrencyProviderProps> = ({ children }) 
       };
     }
     return {
-      activeCurrency: 'EUR',
+      activeCurrency: 'USD',
       exchangeRates: DEFAULT_EXCHANGE_RATES
     };
   });

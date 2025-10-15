@@ -1,5 +1,6 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useDataService } from '@/hooks/useDataService';
 import { ModelManager } from '@/components/models/ModelManager';
 import { ScenarioManager } from '@/components/scenarios/ScenarioManager';
 import { DCFCalculator } from '@/components/dcf/DCFCalculator';
@@ -14,10 +15,12 @@ interface CorporateFinanceWrapperProps {
 
 export const CorporateFinanceWrapper: React.FC<CorporateFinanceWrapperProps> = ({ onSectionChange }) => {
   const { user } = useAuth();
+  const dataService = useDataService();
   const [currentView, setCurrentView] = useState<DashboardView>('models');
   const [selectedModel, setSelectedModel] = useState<DCFModel | null>(null);
   const [selectedScenario, setSelectedScenario] = useState<DCFScenario | null>(null);
   const [scenarios, setScenarios] = useState<DCFScenario[]>([]);
+  const [loading, setLoading] = useState(false);
 
   // Convert DCFScenario to DCFDataSet for compatibility with existing components
   const selectedDataSet: DCFDataSet | null = selectedScenario ? {
@@ -40,6 +43,62 @@ export const CorporateFinanceWrapper: React.FC<CorporateFinanceWrapperProps> = (
   };
 
   const handleScenarioSelect = (scenario: DCFScenario) => {
+    setSelectedScenario(scenario);
+    setCurrentView('calculator');
+  };
+
+  const handleModelDelete = async (modelId: string) => {
+    if (!user) return;
+    
+    try {
+      setLoading(true);
+      await dataService.deleteModel(modelId);
+      
+      // If deleted model was selected, clear selection
+      if (selectedModel?.id === modelId) {
+        setSelectedModel(null);
+        setSelectedScenario(null);
+        setCurrentView('models');
+      }
+      
+      // Refresh models list
+      const updatedModels = await dataService.listModels();
+      // Note: This would need to be handled by ModelManager
+    } catch (error) {
+      console.error('Failed to delete model:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleScenarioDelete = async (scenarioId: string) => {
+    if (!user) return;
+    
+    try {
+      setLoading(true);
+      if (scenarioId) {
+        await dataService.deleteScenario(scenarioId);
+      }
+      
+      // If deleted scenario was selected, clear selection
+      if (selectedScenario?.id === scenarioId) {
+        setSelectedScenario(null);
+        setCurrentView('scenarios');
+      }
+      
+      // Refresh scenarios list
+      if (selectedModel?.id) {
+        const updatedScenarios = await dataService.listScenarios(selectedModel.id);
+        setScenarios(updatedScenarios);
+      }
+    } catch (error) {
+      console.error('Failed to delete scenario:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleScenarioEdit = (scenario: DCFScenario) => {
     setSelectedScenario(scenario);
     setCurrentView('calculator');
   };
@@ -208,25 +267,65 @@ export const CorporateFinanceWrapper: React.FC<CorporateFinanceWrapperProps> = (
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {currentView === 'models' && (
-          <ModelManager
-            onModelSelect={handleModelSelect}
-            selectedModelId={selectedModel?.id}
-          />
+          <div className="space-y-6">
+            <div className="bg-white shadow rounded-lg p-6">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-lg font-medium text-gray-900">DCF Models</h2>
+                <p className="text-sm text-gray-500">Create and manage your DCF models</p>
+              </div>
+              <ModelManager
+                onModelSelect={handleModelSelect}
+                selectedModelId={selectedModel?.id}
+                onModelDelete={handleModelDelete}
+              />
+            </div>
+          </div>
         )}
         
         {currentView === 'scenarios' && selectedModel && (
-          <ScenarioManager
-            onScenarioSelect={handleScenarioSelect}
-            selectedScenarioId={selectedScenario?.id}
-          />
+          <div className="space-y-6">
+            <div className="bg-white shadow rounded-lg p-6">
+              <div className="flex items-center justify-between mb-6">
+                <div>
+                  <h2 className="text-lg font-medium text-gray-900">Scenarios for {selectedModel.modelName}</h2>
+                  <p className="text-sm text-gray-500">Create and manage scenarios for this model</p>
+                </div>
+                <button
+                  onClick={() => setCurrentView('models')}
+                  className="text-sm text-gray-500 hover:text-gray-700"
+                >
+                  ← Back to Models
+                </button>
+              </div>
+              <ScenarioManager
+                onScenarioSelect={handleScenarioSelect}
+                selectedScenarioId={selectedScenario?.id}
+                selectedModelId={selectedModel.id}
+                onScenarioDelete={handleScenarioDelete}
+                onScenarioEdit={handleScenarioEdit}
+                onScenariosChange={setScenarios}
+              />
+            </div>
+          </div>
         )}
         
         {currentView === 'calculator' && selectedDataSet && (
           <div className="space-y-6">
             <div className="bg-white shadow rounded-lg p-6">
-              <h2 className="text-lg font-medium text-gray-900 mb-4">
-                DCF Calculator - {selectedScenario?.scenarioName}
-              </h2>
+              <div className="flex items-center justify-between mb-6">
+                <div>
+                  <h2 className="text-lg font-medium text-gray-900">
+                    DCF Calculator - {selectedScenario?.scenarioName}
+                  </h2>
+                  <p className="text-sm text-gray-500">Model: {selectedModel?.modelName}</p>
+                </div>
+                <button
+                  onClick={() => setCurrentView('scenarios')}
+                  className="text-sm text-gray-500 hover:text-gray-700"
+                >
+                  ← Back to Scenarios
+                </button>
+              </div>
               <DCFCalculator dataSet={selectedDataSet} />
             </div>
           </div>
@@ -235,9 +334,20 @@ export const CorporateFinanceWrapper: React.FC<CorporateFinanceWrapperProps> = (
         {currentView === 'comparison' && scenarios.length > 0 && (
           <div className="space-y-6">
             <div className="bg-white shadow rounded-lg p-6">
-              <h2 className="text-lg font-medium text-gray-900 mb-4">
-                Scenario Comparison
-              </h2>
+              <div className="flex items-center justify-between mb-6">
+                <div>
+                  <h2 className="text-lg font-medium text-gray-900">
+                    Scenario Comparison
+                  </h2>
+                  <p className="text-sm text-gray-500">Compare scenarios for {selectedModel?.modelName}</p>
+                </div>
+                <button
+                  onClick={() => setCurrentView('scenarios')}
+                  className="text-sm text-gray-500 hover:text-gray-700"
+                >
+                  ← Back to Scenarios
+                </button>
+              </div>
               <ScenarioComparison scenarios={scenarios.map(s => ({
                 id: s.id!,
                 label: s.scenarioName,

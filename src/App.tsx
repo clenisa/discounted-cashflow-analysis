@@ -289,59 +289,54 @@ const AppContent = () => {
   };
 
   const headerContent = useMemo(() => {
-    if (scenarios.length > 0 && activeSection !== 'comparison' && activeSection !== 'corporate-finance') {
-      return (
-        <div className="flex items-center justify-between w-full">
-          <div className="flex items-center gap-3">
-            <label htmlFor="scenario-select" className="sr-only">
-              Choose scenario
-            </label>
-            <select
-              id="scenario-select"
-              value={selectedScenarioId}
-              onChange={(event) => setSelectedScenarioId(event.target.value)}
-              className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 shadow-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
-            >
-              {scenarios.map((scenario) => (
-                <option key={scenario.id} value={scenario.id}>
-                  {scenario.label}
-                </option>
-              ))}
-            </select>
-          </div>
-          
-          <div className="flex items-center gap-3">
-            {isAuthenticated ? (
-              <UserProfile />
-            ) : (
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => {
-                    setAuthModalMode('login');
-                    setShowAuthModal(true);
-                  }}
-                  className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900"
-                >
-                  Sign In
-                </button>
-                <button
-                  onClick={() => {
-                    setAuthModalMode('signup');
-                    setShowAuthModal(true);
-                  }}
-                  className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-                >
-                  Sign Up
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
-      );
+    // Only show header content for non-Corporate Finance sections
+    if (activeSection === 'corporate-finance') {
+      return null;
     }
     
-    return null;
-  }, [activeSection, scenarios, selectedScenarioId, isAuthenticated, setAuthModalMode, setShowAuthModal]);
+    return (
+      <div className="flex items-center justify-between w-full">
+        <div className="flex items-center gap-3">
+          {isAuthenticated ? (
+            <div className="text-sm text-gray-600">
+              Welcome to ReturnPro Analytics
+            </div>
+          ) : (
+            <div className="text-sm text-gray-600">
+              Sign in to access Corporate Finance features
+            </div>
+          )}
+        </div>
+        
+        <div className="flex items-center gap-3">
+          {isAuthenticated ? (
+            <UserProfile />
+          ) : (
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => {
+                  setAuthModalMode('login');
+                  setShowAuthModal(true);
+                }}
+                className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900"
+              >
+                Sign In
+              </button>
+              <button
+                onClick={() => {
+                  setAuthModalMode('signup');
+                  setShowAuthModal(true);
+                }}
+                className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+              >
+                Sign Up
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }, [activeSection, isAuthenticated, setAuthModalMode, setShowAuthModal]);
 
   if (loading) {
     return (
@@ -363,26 +358,31 @@ const AppContent = () => {
       >
         {activeSection === 'corporate-finance' ? (
           <CorporateFinanceWrapper onSectionChange={setActiveSection} />
-        ) : activeSection === 'comparison' ? (
-          <ScenarioComparison scenarios={scenarios} />
-        ) : activeSection === 'financial-data' && selectedScenario ? (
-          <FinancialDataTab
-            scenario={selectedScenario}
-            onLabelChange={handleLabelChange}
-            onEbitdaChange={handleEbitdaChange}
-            onParametersChange={handleParametersChange}
-            onIncomeStatementToggle={handleIncomeStatementToggle}
-            onIncomeStatementChange={handleIncomeStatementChange}
-            onAdjustmentChange={handleAdjustmentChange}
-          />
-        ) : activeSection === 'dcf' && selectedScenario ? (
-          <DCFCalculator
-            dataSet={selectedScenario}
-          />
         ) : (
-          <div className="flex items-center justify-center h-64">
-            <div className="text-center">
-              <p className="text-slate-500">Please select a scenario to view details.</p>
+          <div className="flex items-center justify-center min-h-96">
+            <div className="text-center max-w-md">
+              <div className="mx-auto w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-4">
+                <svg className="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                </svg>
+              </div>
+              <h2 className="text-2xl font-bold text-gray-900 mb-4">
+                {activeSection === 'dcf' ? 'DCF Calculator' : 
+                 activeSection === 'financial-data' ? 'Financial Data' : 
+                 activeSection === 'comparison' ? 'Scenario Comparison' : 
+                 'ReturnPro Analytics'}
+              </h2>
+              <p className="text-gray-600 mb-6">
+                This feature has been moved to Corporate Finance. Click on Corporate Finance in the sidebar to access all DCF functionality.
+              </p>
+              {(
+                <button
+                  onClick={() => setActiveSection('corporate-finance')}
+                  className="px-6 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                >
+                  Go to Corporate Finance
+                </button>
+              )}
             </div>
           </div>
         )}

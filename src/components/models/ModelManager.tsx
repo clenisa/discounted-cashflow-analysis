@@ -6,11 +6,13 @@ import type { DCFModel, DCFModelWithScenarios } from '@/types/dcf';
 interface ModelManagerProps {
   onModelSelect: (model: DCFModel) => void;
   selectedModelId?: string;
+  onModelDelete?: (modelId: string) => void;
 }
 
 export const ModelManager: React.FC<ModelManagerProps> = ({
   onModelSelect,
-  selectedModelId
+  selectedModelId,
+  onModelDelete
 }) => {
   const { user } = useAuth();
   const dataService = useDataService();

@@ -633,6 +633,17 @@ export const ScenarioForm: React.FC<ScenarioFormProps> = ({
                         <span className="ml-1 font-medium capitalize">{baseScenario.inputMode || 'ebitda'}</span>
                       </div>
                     </div>
+                    {/* Debug info */}
+                    <div className="mt-2 pt-2 border-t border-gray-200 text-xs text-gray-500">
+                      <div>Has EBITDA Data: {baseScenario.ebitdaData ? 'Yes' : 'No'}</div>
+                      <div>Has Income Statement Data: {baseScenario.incomeStatementData ? 'Yes' : 'No'}</div>
+                      {baseScenario.ebitdaData && (
+                        <div>EBITDA Years: {Object.keys(baseScenario.ebitdaData).join(', ')}</div>
+                      )}
+                      {baseScenario.incomeStatementData && (
+                        <div>Income Statement Years: {Object.keys(baseScenario.incomeStatementData).join(', ')}</div>
+                      )}
+                    </div>
                   </div>
                 )}
               </div>
@@ -724,14 +735,15 @@ export const ScenarioForm: React.FC<ScenarioFormProps> = ({
                 <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
                   <h6 className="text-sm font-medium text-gray-900 mb-3">EBITDA Adjustments (%)</h6>
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {ebitdaYears.map(year => {
-                      const baseEbitda = baseScenario.ebitdaData?.[year] || 0;
-                      const adjustment = formData.incomeStatementAdjustments?.[year]?.revenueAdjustment || 0;
+                    {Object.keys(baseScenario.ebitdaData).map(year => {
+                      const yearNum = parseInt(year);
+                      const baseEbitda = baseScenario.ebitdaData?.[yearNum] || 0;
+                      const adjustment = formData.incomeStatementAdjustments?.[yearNum]?.revenueAdjustment || 0;
                       const newEbitda = baseEbitda * (1 + adjustment / 100);
                       
                       return (
-                        <div key={year} className="p-3 bg-white border border-gray-200 rounded-md">
-                          <div className="text-sm font-medium text-gray-900 mb-2">{year}</div>
+                        <div key={yearNum} className="p-3 bg-white border border-gray-200 rounded-md">
+                          <div className="text-sm font-medium text-gray-900 mb-2">{yearNum}</div>
                           <div className="space-y-2">
                             <div>
                               <label className="block text-xs font-medium text-gray-700 mb-1">Adjustment %</label>
@@ -739,7 +751,7 @@ export const ScenarioForm: React.FC<ScenarioFormProps> = ({
                                 <input
                                   type="number"
                                   value={adjustment}
-                                  onChange={(e) => handleAdjustmentChange(year, 'revenueAdjustment', Number(e.target.value))}
+                                  onChange={(e) => handleAdjustmentChange(yearNum, 'revenueAdjustment', Number(e.target.value))}
                                   step="0.1"
                                   className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
                                 />
@@ -762,9 +774,10 @@ export const ScenarioForm: React.FC<ScenarioFormProps> = ({
                 <div className="mb-6 p-4 bg-purple-50 border border-purple-200 rounded-lg">
                   <h6 className="text-sm font-medium text-gray-900 mb-3">Income Statement Adjustments (%)</h6>
                   <div className="space-y-4">
-                    {ebitdaYears.map(year => {
-                      const baseData = baseScenario.incomeStatementData?.[year];
-                      const adjustments = formData.incomeStatementAdjustments?.[year] || {
+                    {Object.keys(baseScenario.incomeStatementData).map(year => {
+                      const yearNum = parseInt(year);
+                      const baseData = baseScenario.incomeStatementData?.[yearNum];
+                      const adjustments = formData.incomeStatementAdjustments?.[yearNum] || {
                         revenueAdjustment: 0,
                         cogsAdjustment: 0,
                         sgaAdjustment: 0
@@ -784,8 +797,8 @@ export const ScenarioForm: React.FC<ScenarioFormProps> = ({
                       const baseEbitda = baseData.revenue - baseData.cogs - baseData.sga - baseData.depreciation - baseData.amortization;
                       
                       return (
-                        <div key={year} className="p-4 bg-white border border-gray-200 rounded-lg">
-                          <div className="text-sm font-medium text-gray-900 mb-3">{year}</div>
+                        <div key={yearNum} className="p-4 bg-white border border-gray-200 rounded-lg">
+                          <div className="text-sm font-medium text-gray-900 mb-3">{yearNum}</div>
                           
                           {/* Adjustment Inputs */}
                           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
@@ -795,7 +808,7 @@ export const ScenarioForm: React.FC<ScenarioFormProps> = ({
                                 <input
                                   type="number"
                                   value={adjustments.revenueAdjustment || 0}
-                                  onChange={(e) => handleAdjustmentChange(year, 'revenueAdjustment', Number(e.target.value))}
+                                  onChange={(e) => handleAdjustmentChange(yearNum, 'revenueAdjustment', Number(e.target.value))}
                                   step="0.1"
                                   className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
                                 />
@@ -812,7 +825,7 @@ export const ScenarioForm: React.FC<ScenarioFormProps> = ({
                                 <input
                                   type="number"
                                   value={adjustments.cogsAdjustment || 0}
-                                  onChange={(e) => handleAdjustmentChange(year, 'cogsAdjustment', Number(e.target.value))}
+                                  onChange={(e) => handleAdjustmentChange(yearNum, 'cogsAdjustment', Number(e.target.value))}
                                   step="0.1"
                                   className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
                                 />
@@ -829,7 +842,7 @@ export const ScenarioForm: React.FC<ScenarioFormProps> = ({
                                 <input
                                   type="number"
                                   value={adjustments.sgaAdjustment || 0}
-                                  onChange={(e) => handleAdjustmentChange(year, 'sgaAdjustment', Number(e.target.value))}
+                                  onChange={(e) => handleAdjustmentChange(yearNum, 'sgaAdjustment', Number(e.target.value))}
                                   step="0.1"
                                   className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
                                 />

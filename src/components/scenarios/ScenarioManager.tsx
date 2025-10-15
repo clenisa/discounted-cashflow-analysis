@@ -72,6 +72,20 @@ export const ScenarioManager: React.FC<ScenarioManagerProps> = ({
     onScenarioSelect(scenario);
   };
 
+  const getUniqueScenarioName = () => {
+    const baseName = 'New Scenario';
+    if (!scenarios.some((scenario) => scenario.scenarioName === baseName)) {
+      return baseName;
+    }
+
+    let suffix = 2;
+    while (scenarios.some((scenario) => scenario.scenarioName === `${baseName} ${suffix}`)) {
+      suffix += 1;
+    }
+
+    return `${baseName} ${suffix}`;
+  };
+
   const handleCreateScenario = async () => {
     if (!selectedModelId) return;
     
@@ -79,7 +93,7 @@ export const ScenarioManager: React.FC<ScenarioManagerProps> = ({
       const newScenario: Omit<DCFScenario, 'id'> = {
         userId: user?.id,
         modelId: selectedModelId,
-        scenarioName: 'New Scenario',
+        scenarioName: getUniqueScenarioName(),
         description: '',
         isBaseScenario: false,
         sortOrder: scenarios.length
@@ -93,7 +107,8 @@ export const ScenarioManager: React.FC<ScenarioManagerProps> = ({
         onScenarioSelect(savedScenario);
       }
     } catch (err) {
-      setError('Failed to create scenario');
+      const message = err instanceof Error ? err.message : 'Failed to create scenario';
+      setError(message);
       console.error('Error creating scenario:', err);
     }
   };

@@ -644,7 +644,7 @@ export const ScenarioForm: React.FC<ScenarioFormProps> = ({
             <div className="mb-6">
               <h5 className="text-md font-medium text-gray-900 mb-4">Adjustment Matrix</h5>
               
-              {/* Parameter Adjustments */}
+              {/* Financial Parameter Adjustments */}
               <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
                 <h6 className="text-sm font-medium text-gray-900 mb-3">Financial Parameter Adjustments (%)</h6>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -667,7 +667,7 @@ export const ScenarioForm: React.FC<ScenarioFormProps> = ({
                       <span className="text-sm text-gray-500">%</span>
                     </div>
                     <div className="text-xs text-gray-600 mt-1">
-                      New: {((baseScenario.discountRate || model.discountRate) * (1 + (formData.parameterAdjustments?.discountRateAdjustment || 0) / 100)).toFixed(1)}%
+                      Base: {(baseScenario.discountRate || model.discountRate).toFixed(1)}% → New: {((baseScenario.discountRate || model.discountRate) * (1 + (formData.parameterAdjustments?.discountRateAdjustment || 0) / 100)).toFixed(1)}%
                     </div>
                   </div>
                   
@@ -690,7 +690,7 @@ export const ScenarioForm: React.FC<ScenarioFormProps> = ({
                       <span className="text-sm text-gray-500">%</span>
                     </div>
                     <div className="text-xs text-gray-600 mt-1">
-                      New: {((baseScenario.perpetuityRate || model.perpetuityRate) * (1 + (formData.parameterAdjustments?.perpetuityRateAdjustment || 0) / 100)).toFixed(1)}%
+                      Base: {(baseScenario.perpetuityRate || model.perpetuityRate).toFixed(1)}% → New: {((baseScenario.perpetuityRate || model.perpetuityRate) * (1 + (formData.parameterAdjustments?.perpetuityRateAdjustment || 0) / 100)).toFixed(1)}%
                     </div>
                   </div>
                   
@@ -713,7 +713,7 @@ export const ScenarioForm: React.FC<ScenarioFormProps> = ({
                       <span className="text-sm text-gray-500">%</span>
                     </div>
                     <div className="text-xs text-gray-600 mt-1">
-                      New: {((baseScenario.corporateTaxRate || model.corporateTaxRate) * (1 + (formData.parameterAdjustments?.corporateTaxRateAdjustment || 0) / 100)).toFixed(1)}%
+                      Base: {(baseScenario.corporateTaxRate || model.corporateTaxRate).toFixed(1)}% → New: {((baseScenario.corporateTaxRate || model.corporateTaxRate) * (1 + (formData.parameterAdjustments?.corporateTaxRateAdjustment || 0) / 100)).toFixed(1)}%
                     </div>
                   </div>
                 </div>
@@ -721,54 +721,46 @@ export const ScenarioForm: React.FC<ScenarioFormProps> = ({
 
               {/* EBITDA Adjustments */}
               {baseScenario.inputMode === 'ebitda' && baseScenario.ebitdaData && (
-                <div className="mb-6">
-                  <h6 className="text-sm font-medium text-gray-900 mb-3">EBITDA Adjustments</h6>
-                  <div className="overflow-x-auto">
-                    <table className="w-full border-collapse border border-gray-200">
-                      <thead>
-                        <tr className="bg-gray-50">
-                          <th className="border border-gray-200 px-3 py-2 text-left text-xs font-medium text-gray-700">Year</th>
-                          <th className="border border-gray-200 px-3 py-2 text-left text-xs font-medium text-gray-700">Base EBITDA</th>
-                          <th className="border border-gray-200 px-3 py-2 text-left text-xs font-medium text-gray-700">Adjustment %</th>
-                          <th className="border border-gray-200 px-3 py-2 text-left text-xs font-medium text-gray-700">New EBITDA</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {ebitdaYears.map(year => {
-                          const baseEbitda = baseScenario.ebitdaData?.[year] || 0;
-                          const adjustment = formData.incomeStatementAdjustments?.[year]?.revenueAdjustment || 0;
-                          const newEbitda = baseEbitda * (1 + adjustment / 100);
-                          
-                          return (
-                            <tr key={year}>
-                              <td className="border border-gray-200 px-3 py-2 text-sm">{year}</td>
-                              <td className="border border-gray-200 px-3 py-2 text-sm">{baseEbitda.toLocaleString()}</td>
-                              <td className="border border-gray-200 px-3 py-2">
+                <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
+                  <h6 className="text-sm font-medium text-gray-900 mb-3">EBITDA Adjustments (%)</h6>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {ebitdaYears.map(year => {
+                      const baseEbitda = baseScenario.ebitdaData?.[year] || 0;
+                      const adjustment = formData.incomeStatementAdjustments?.[year]?.revenueAdjustment || 0;
+                      const newEbitda = baseEbitda * (1 + adjustment / 100);
+                      
+                      return (
+                        <div key={year} className="p-3 bg-white border border-gray-200 rounded-md">
+                          <div className="text-sm font-medium text-gray-900 mb-2">{year}</div>
+                          <div className="space-y-2">
+                            <div>
+                              <label className="block text-xs font-medium text-gray-700 mb-1">Adjustment %</label>
+                              <div className="flex items-center gap-2">
                                 <input
                                   type="number"
                                   value={adjustment}
                                   onChange={(e) => handleAdjustmentChange(year, 'revenueAdjustment', Number(e.target.value))}
                                   step="0.1"
-                                  className="w-20 px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+                                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
                                 />
-                                <span className="ml-1 text-xs text-gray-500">%</span>
-                              </td>
-                              <td className="border border-gray-200 px-3 py-2 text-sm font-medium text-blue-600">
-                                {newEbitda.toLocaleString()}
-                              </td>
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
+                                <span className="text-sm text-gray-500">%</span>
+                              </div>
+                            </div>
+                            <div className="text-xs text-gray-600">
+                              Base: {baseEbitda.toLocaleString()} → New: <span className="font-medium text-green-600">{newEbitda.toLocaleString()}</span>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
               )}
 
               {/* Income Statement Adjustments */}
               {baseScenario.inputMode === 'income-statement' && baseScenario.incomeStatementData && (
-                <div className="mb-6">
-                  <h6 className="text-sm font-medium text-gray-900 mb-3">Income Statement Adjustments</h6>
+                <div className="mb-6 p-4 bg-purple-50 border border-purple-200 rounded-lg">
+                  <h6 className="text-sm font-medium text-gray-900 mb-3">Income Statement Adjustments (%)</h6>
                   <div className="space-y-4">
                     {ebitdaYears.map(year => {
                       const baseData = baseScenario.incomeStatementData?.[year];
@@ -788,8 +780,11 @@ export const ScenarioForm: React.FC<ScenarioFormProps> = ({
                         amortization: baseData.amortization
                       };
                       
+                      const adjustedEbitda = adjustedData.revenue - adjustedData.cogs - adjustedData.sga - adjustedData.depreciation - adjustedData.amortization;
+                      const baseEbitda = baseData.revenue - baseData.cogs - baseData.sga - baseData.depreciation - baseData.amortization;
+                      
                       return (
-                        <div key={year} className="border border-gray-200 rounded-lg p-4">
+                        <div key={year} className="p-4 bg-white border border-gray-200 rounded-lg">
                           <div className="text-sm font-medium text-gray-900 mb-3">{year}</div>
                           
                           {/* Adjustment Inputs */}
@@ -802,9 +797,12 @@ export const ScenarioForm: React.FC<ScenarioFormProps> = ({
                                   value={adjustments.revenueAdjustment || 0}
                                   onChange={(e) => handleAdjustmentChange(year, 'revenueAdjustment', Number(e.target.value))}
                                   step="0.1"
-                                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
                                 />
                                 <span className="text-sm text-gray-500">%</span>
+                              </div>
+                              <div className="text-xs text-gray-600 mt-1">
+                                Base: {baseData.revenue.toLocaleString()} → New: <span className="font-medium text-purple-600">{adjustedData.revenue.toLocaleString()}</span>
                               </div>
                             </div>
                             
@@ -816,9 +814,12 @@ export const ScenarioForm: React.FC<ScenarioFormProps> = ({
                                   value={adjustments.cogsAdjustment || 0}
                                   onChange={(e) => handleAdjustmentChange(year, 'cogsAdjustment', Number(e.target.value))}
                                   step="0.1"
-                                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
                                 />
                                 <span className="text-sm text-gray-500">%</span>
+                              </div>
+                              <div className="text-xs text-gray-600 mt-1">
+                                Base: {baseData.cogs.toLocaleString()} → New: <span className="font-medium text-purple-600">{adjustedData.cogs.toLocaleString()}</span>
                               </div>
                             </div>
                             
@@ -830,42 +831,24 @@ export const ScenarioForm: React.FC<ScenarioFormProps> = ({
                                   value={adjustments.sgaAdjustment || 0}
                                   onChange={(e) => handleAdjustmentChange(year, 'sgaAdjustment', Number(e.target.value))}
                                   step="0.1"
-                                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
                                 />
                                 <span className="text-sm text-gray-500">%</span>
+                              </div>
+                              <div className="text-xs text-gray-600 mt-1">
+                                Base: {baseData.sga.toLocaleString()} → New: <span className="font-medium text-purple-600">{adjustedData.sga.toLocaleString()}</span>
                               </div>
                             </div>
                           </div>
                           
-                          {/* Transformed Income Statement */}
-                          <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
-                            <div className="text-xs font-medium text-gray-700 mb-2">Transformed Income Statement</div>
-                            <div className="grid grid-cols-2 md:grid-cols-5 gap-4 text-sm">
-                              <div>
-                                <span className="text-gray-500">Revenue:</span>
-                                <div className="font-medium">{adjustedData.revenue.toLocaleString()}</div>
-                              </div>
-                              <div>
-                                <span className="text-gray-500">COGS:</span>
-                                <div className="font-medium">{adjustedData.cogs.toLocaleString()}</div>
-                              </div>
-                              <div>
-                                <span className="text-gray-500">SGA:</span>
-                                <div className="font-medium">{adjustedData.sga.toLocaleString()}</div>
-                              </div>
-                              <div>
-                                <span className="text-gray-500">Depreciation:</span>
-                                <div className="font-medium">{adjustedData.depreciation.toLocaleString()}</div>
-                              </div>
-                              <div>
-                                <span className="text-gray-500">Amortization:</span>
-                                <div className="font-medium">{adjustedData.amortization.toLocaleString()}</div>
-                              </div>
-                            </div>
-                            <div className="mt-2 pt-2 border-t border-gray-300">
-                              <span className="text-gray-500 text-sm">EBITDA:</span>
-                              <span className="ml-2 font-medium text-blue-600">
-                                {(adjustedData.revenue - adjustedData.cogs - adjustedData.sga - adjustedData.depreciation - adjustedData.amortization).toLocaleString()}
+                          {/* EBITDA Summary */}
+                          <div className="bg-gray-50 border border-gray-200 rounded-md p-3">
+                            <div className="text-xs font-medium text-gray-700 mb-1">EBITDA Impact</div>
+                            <div className="text-sm">
+                              Base EBITDA: {baseEbitda.toLocaleString()} → 
+                              <span className="ml-2 font-medium text-purple-600">{adjustedEbitda.toLocaleString()}</span>
+                              <span className="ml-2 text-xs text-gray-500">
+                                ({(adjustedEbitda - baseEbitda).toLocaleString()} change)
                               </span>
                             </div>
                           </div>
@@ -878,7 +861,7 @@ export const ScenarioForm: React.FC<ScenarioFormProps> = ({
             </div>
           )}
 
-          {formData.inputMode === 'ebitda' ? (
+          {formData.inputMode === 'ebitda' && (
             // EBITDA Input
             <div className="space-y-3">
               {ebitdaYears.map(year => (
@@ -900,12 +883,14 @@ export const ScenarioForm: React.FC<ScenarioFormProps> = ({
                 </div>
               ))}
             </div>
-          ) : (
+          )}
+
+          {formData.inputMode === 'income-statement' && (
             // Income Statement Input
             <div className="space-y-4">
               {ebitdaYears.map(year => (
                 <div key={year} className="border border-gray-200 rounded-lg p-4">
-                  <h5 className="text-sm font-medium text-gray-900 mb-3">{year}</h5>
+                  <div className="text-sm font-medium text-gray-900 mb-3">{year}</div>
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     <div>
                       <label className="block text-xs font-medium text-gray-700 mb-1">Revenue</label>
@@ -961,7 +946,7 @@ export const ScenarioForm: React.FC<ScenarioFormProps> = ({
                   
                   {/* Adjustment Matrix */}
                   <div className="mt-4 pt-4 border-t border-gray-200">
-                    <h6 className="text-xs font-medium text-gray-700 mb-2">Adjustment Matrix (%)</h6>
+                    <div className="text-xs font-medium text-gray-700 mb-2">Adjustment Matrix (%)</div>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       <div>
                         <label className="block text-xs font-medium text-gray-700 mb-1">Revenue Adj.</label>

@@ -9,7 +9,7 @@ import { AuthProvider, useAuth } from '@/contexts/AuthContext';
 import { CurrencyProvider, useCurrency } from '@/contexts/CurrencyContext';
 import { AuthModal } from '@/components/auth/AuthModal';
 import { UserProfile } from '@/components/auth/UserProfile';
-import { CorporateFinanceDashboard } from '@/components/corporate-finance/CorporateFinanceDashboard';
+import { CorporateFinanceWrapper } from '@/components/corporate-finance/CorporateFinanceWrapper';
 import type {
   DCFDataSet,
   DCFParameters,
@@ -288,55 +288,60 @@ const AppContent = () => {
     }));
   };
 
-  const headerContent =
-    scenarios.length > 0 && activeSection !== 'comparison' ? (
-      <div className="flex items-center justify-between w-full">
-        <div className="flex items-center gap-3">
-          <label htmlFor="scenario-select" className="sr-only">
-            Choose scenario
-          </label>
-          <select
-            id="scenario-select"
-            value={selectedScenarioId}
-            onChange={(event) => setSelectedScenarioId(event.target.value)}
-            className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 shadow-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
-          >
-            {scenarios.map((scenario) => (
-              <option key={scenario.id} value={scenario.id}>
-                {scenario.label}
-              </option>
-            ))}
-          </select>
+  const headerContent = useMemo(() => {
+    if (scenarios.length > 0 && activeSection !== 'comparison' && activeSection !== 'corporate-finance') {
+      return (
+        <div className="flex items-center justify-between w-full">
+          <div className="flex items-center gap-3">
+            <label htmlFor="scenario-select" className="sr-only">
+              Choose scenario
+            </label>
+            <select
+              id="scenario-select"
+              value={selectedScenarioId}
+              onChange={(event) => setSelectedScenarioId(event.target.value)}
+              className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 shadow-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+            >
+              {scenarios.map((scenario) => (
+                <option key={scenario.id} value={scenario.id}>
+                  {scenario.label}
+                </option>
+              ))}
+            </select>
+          </div>
+          
+          <div className="flex items-center gap-3">
+            {isAuthenticated ? (
+              <UserProfile />
+            ) : (
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => {
+                    setAuthModalMode('login');
+                    setShowAuthModal(true);
+                  }}
+                  className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900"
+                >
+                  Sign In
+                </button>
+                <button
+                  onClick={() => {
+                    setAuthModalMode('signup');
+                    setShowAuthModal(true);
+                  }}
+                  className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                >
+                  Sign Up
+                </button>
+              </div>
+            )}
+          </div>
         </div>
-        
-        <div className="flex items-center gap-3">
-          {isAuthenticated ? (
-            <UserProfile />
-          ) : (
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => {
-                  setAuthModalMode('login');
-                  setShowAuthModal(true);
-                }}
-                className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900"
-              >
-                Sign In
-              </button>
-              <button
-                onClick={() => {
-                  setAuthModalMode('signup');
-                  setShowAuthModal(true);
-                }}
-                className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-              >
-                Sign Up
-              </button>
-            </div>
-          )}
-        </div>
-      </div>
-    ) : null;
+      );
+    }
+    
+    return null;
+  }, [activeSection, scenarios, selectedScenarioId, isAuthenticated, setAuthModalMode, setShowAuthModal]);
 
   if (loading) {
     return (
@@ -357,7 +362,7 @@ const AppContent = () => {
         headerContent={headerContent}
       >
         {activeSection === 'corporate-finance' ? (
-          <CorporateFinanceDashboard onSectionChange={setActiveSection} />
+          <CorporateFinanceWrapper onSectionChange={setActiveSection} />
         ) : activeSection === 'comparison' ? (
           <ScenarioComparison scenarios={scenarios} />
         ) : activeSection === 'financial-data' && selectedScenario ? (

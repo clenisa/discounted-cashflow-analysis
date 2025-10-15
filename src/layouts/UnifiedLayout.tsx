@@ -212,9 +212,8 @@ export const UnifiedLayout: React.FC<UnifiedLayoutProps> = ({
             {headerContent}
           </div>
           
-          {/* User Profile */}
+          {/* Settings Button */}
           <div className="flex items-center gap-4">
-            <UserProfileHeader user={user} onSignOut={signOut} />
             <button
               type="button"
               className="rounded-full border border-slate-200 p-2 text-slate-500 hover:text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"

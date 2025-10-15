@@ -1,6 +1,5 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { UnifiedLayout, ReturnProSection } from '@/layouts/UnifiedLayout';
 import { ModelManager } from '@/components/models/ModelManager';
 import { ScenarioManager } from '@/components/scenarios/ScenarioManager';
 import { DCFCalculator } from '@/components/dcf/DCFCalculator';
@@ -9,11 +8,11 @@ import type { DCFModel, DCFScenario, DCFDataSet } from '@/types/dcf';
 
 type DashboardView = 'models' | 'scenarios' | 'calculator' | 'comparison';
 
-interface CorporateFinanceDashboardProps {
-  onSectionChange?: (section: ReturnProSection) => void;
+interface CorporateFinanceWrapperProps {
+  onSectionChange?: (section: any) => void;
 }
 
-export const CorporateFinanceDashboard: React.FC<CorporateFinanceDashboardProps> = ({ onSectionChange }) => {
+export const CorporateFinanceWrapper: React.FC<CorporateFinanceWrapperProps> = ({ onSectionChange }) => {
   const { user } = useAuth();
   const [currentView, setCurrentView] = useState<DashboardView>('models');
   const [selectedModel, setSelectedModel] = useState<DCFModel | null>(null);
@@ -147,7 +146,67 @@ export const CorporateFinanceDashboard: React.FC<CorporateFinanceDashboardProps>
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <>
+      {/* Header Content */}
+      <div className="bg-white border-b">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          {headerContent}
+        </div>
+      </div>
+
+      {/* Breadcrumbs */}
+      {breadcrumbs.length > 1 && (
+        <div className="bg-gray-50 border-b">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
+            <nav className="flex" aria-label="Breadcrumb">
+              <ol className="flex items-center space-x-4">
+                <li>
+                  <button
+                    onClick={handleBackToModels}
+                    className="text-gray-500 hover:text-gray-700 text-sm font-medium"
+                  >
+                    Models
+                  </button>
+                </li>
+                
+                {selectedModel && (
+                  <>
+                    <li>
+                      <div className="flex items-center">
+                        <svg className="flex-shrink-0 h-5 w-5 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
+                        </svg>
+                        <button
+                          onClick={handleBackToScenarios}
+                          className="ml-4 text-gray-500 hover:text-gray-700 text-sm font-medium"
+                        >
+                          {selectedModel.modelName}
+                        </button>
+                      </div>
+                    </li>
+                  </>
+                )}
+                
+                {selectedScenario && (
+                  <li>
+                    <div className="flex items-center">
+                      <svg className="flex-shrink-0 h-5 w-5 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
+                      </svg>
+                      <span className="ml-4 text-gray-500 text-sm font-medium">
+                        {selectedScenario.scenarioName}
+                      </span>
+                    </div>
+                  </li>
+                )}
+              </ol>
+            </nav>
+          </div>
+        </div>
+      )}
+
+      {/* Main Content */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {currentView === 'models' && (
           <ModelManager
             onModelSelect={handleModelSelect}
@@ -195,5 +254,6 @@ export const CorporateFinanceDashboard: React.FC<CorporateFinanceDashboardProps>
           </div>
         )}
       </div>
+    </>
   );
 };

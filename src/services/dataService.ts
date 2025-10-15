@@ -179,7 +179,7 @@ export class SupabaseDataService implements DataService {
 
   // Model operations
   async saveModel(model: DCFModel): Promise<string> {
-    const { data, error } = await this.supabaseClientClient
+    const { data, error } = await this.supabaseClient
       .from('dcf_models')
       .upsert({
         ...model,
@@ -217,7 +217,7 @@ export class SupabaseDataService implements DataService {
   }
 
   async loadModel(id: string): Promise<DCFModel | null> {
-    const { data, error } = await this.supabaseClientClient
+    const { data, error } = await this.supabaseClient
       .from('dcf_models')
       .select('*')
       .eq('id', id)
@@ -234,7 +234,7 @@ export class SupabaseDataService implements DataService {
   }
 
   async listModels(): Promise<DCFModel[]> {
-    const { data, error } = await this.supabaseClientClient
+    const { data, error } = await this.supabaseClient
       .from('dcf_models')
       .select('*')
       .order('updated_at', { ascending: false });
@@ -259,7 +259,7 @@ export class SupabaseDataService implements DataService {
 
   // Scenario operations
   async saveScenario(scenario: DCFScenario): Promise<string> {
-    const { data, error } = await this.supabaseClientClient
+    const { data, error } = await this.supabaseClient
       .from('dcf_scenarios')
       .upsert({
         ...scenario,
@@ -293,7 +293,7 @@ export class SupabaseDataService implements DataService {
   }
 
   async loadScenario(id: string): Promise<DCFScenario | null> {
-    const { data, error } = await this.supabaseClientClient
+    const { data, error } = await this.supabaseClient
       .from('dcf_scenarios')
       .select('*')
       .eq('id', id)
@@ -310,7 +310,7 @@ export class SupabaseDataService implements DataService {
   }
 
   async listScenarios(modelId: string): Promise<DCFScenario[]> {
-    const { data, error } = await this.supabaseClientClient
+    const { data, error } = await this.supabaseClient
       .from('dcf_scenarios')
       .select('*')
       .eq('model_id', modelId)
@@ -351,7 +351,7 @@ export class SupabaseDataService implements DataService {
 
   // Sharing operations
   async shareModel(modelId: string, shareData: Partial<DCFModelShare>): Promise<string> {
-    const { data, error } = await this.supabaseClientClient
+    const { data, error } = await this.supabaseClient
       .from('dcf_model_shares')
       .insert({
         model_id: modelId,
@@ -405,7 +405,7 @@ export class SupabaseDataService implements DataService {
   }
 
   async listSharedModels(): Promise<DCFModelWithAccess[]> {
-    const { data, error } = await this.supabaseClientClient
+    const { data, error } = await this.supabaseClient
       .from('user_accessible_models')
       .select('*');
 
@@ -417,7 +417,7 @@ export class SupabaseDataService implements DataService {
   }
 
   async listModelShares(modelId: string): Promise<DCFModelShare[]> {
-    const { data, error } = await this.supabaseClientClient
+    const { data, error } = await this.supabaseClient
       .from('dcf_model_shares')
       .select('*')
       .eq('model_id', modelId);
@@ -431,7 +431,7 @@ export class SupabaseDataService implements DataService {
 
   // Template operations
   async saveTemplate(template: FinancialDataTemplate): Promise<string> {
-    const { data, error } = await this.supabaseClientClient
+    const { data, error } = await this.supabaseClient
       .from('financial_data_templates')
       .upsert({
         ...template,
@@ -462,7 +462,7 @@ export class SupabaseDataService implements DataService {
   }
 
   async loadTemplate(id: string): Promise<FinancialDataTemplate | null> {
-    const { data, error } = await this.supabaseClientClient
+    const { data, error } = await this.supabaseClient
       .from('financial_data_templates')
       .select('*')
       .eq('id', id)
@@ -519,7 +519,7 @@ export class SupabaseDataService implements DataService {
 
   // Version operations
   async createModelVersion(modelId: string, changeSummary?: string, changeType?: string): Promise<string> {
-    const { data, error } = await this.supabaseClientClient
+    const { data, error } = await this.supabaseClient
       .from('dcf_model_versions')
       .insert({
         model_id: modelId,
@@ -537,7 +537,7 @@ export class SupabaseDataService implements DataService {
   }
 
   async listModelVersions(modelId: string): Promise<DCFModelVersion[]> {
-    const { data, error } = await this.supabaseClientClient
+    const { data, error } = await this.supabaseClient
       .from('dcf_model_versions')
       .select('*')
       .eq('model_id', modelId)
@@ -551,7 +551,7 @@ export class SupabaseDataService implements DataService {
   }
 
   async loadModelVersion(versionId: string): Promise<DCFModelVersion | null> {
-    const { data, error } = await this.supabaseClientClient
+    const { data, error } = await this.supabaseClient
       .from('dcf_model_versions')
       .select('*')
       .eq('id', versionId)
@@ -582,7 +582,7 @@ export class SupabaseDataService implements DataService {
 
   // Statistics and analytics
   async getModelStats(modelId: string): Promise<DCFModelStats | null> {
-    const { data, error } = await this.supabaseClientClient
+    const { data, error } = await this.supabaseClient
       .from('dcf_model_stats')
       .select('*')
       .eq('id', modelId)
@@ -599,7 +599,7 @@ export class SupabaseDataService implements DataService {
   }
 
   async getUserModelStats(): Promise<DCFModelStats[]> {
-    const { data, error } = await this.supabaseClientClient
+    const { data, error } = await this.supabaseClient
       .from('dcf_model_stats')
       .select('*')
       .order('updated_at', { ascending: false });

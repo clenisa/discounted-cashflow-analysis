@@ -18,15 +18,7 @@ const AppContent = () => {
     return (
       <div className="flex items-center justify-between w-full">
         <div className="flex items-center gap-3">
-          {isAuthenticated ? (
-            <div className="text-sm text-gray-600">
-              Sign in to access Corporate Finance features
-            </div>
-          ) : (
-            <div className="text-sm text-gray-600">
-              Sign in to access Corporate Finance features
-            </div>
-          )}
+          {/* Left side content can be added here if needed */}
         </div>
         
         <div className="flex items-center gap-3">

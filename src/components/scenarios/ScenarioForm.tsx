@@ -639,6 +639,245 @@ export const ScenarioForm: React.FC<ScenarioFormProps> = ({
             </div>
           )}
 
+          {/* Adjustment Matrix Interface */}
+          {formData.inputMode === 'adjustment-matrix' && baseScenario && (
+            <div className="mb-6">
+              <h5 className="text-md font-medium text-gray-900 mb-4">Adjustment Matrix</h5>
+              
+              {/* Parameter Adjustments */}
+              <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                <h6 className="text-sm font-medium text-gray-900 mb-3">Financial Parameter Adjustments (%)</h6>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700 mb-1">Discount Rate Adjustment</label>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="number"
+                        value={formData.parameterAdjustments?.discountRateAdjustment || 0}
+                        onChange={(e) => setFormData(prev => ({
+                          ...prev,
+                          parameterAdjustments: {
+                            ...prev.parameterAdjustments,
+                            discountRateAdjustment: Number(e.target.value)
+                          }
+                        }))}
+                        step="0.1"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      />
+                      <span className="text-sm text-gray-500">%</span>
+                    </div>
+                    <div className="text-xs text-gray-600 mt-1">
+                      New: {((baseScenario.discountRate || model.discountRate) * (1 + (formData.parameterAdjustments?.discountRateAdjustment || 0) / 100)).toFixed(1)}%
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700 mb-1">Perpetuity Rate Adjustment</label>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="number"
+                        value={formData.parameterAdjustments?.perpetuityRateAdjustment || 0}
+                        onChange={(e) => setFormData(prev => ({
+                          ...prev,
+                          parameterAdjustments: {
+                            ...prev.parameterAdjustments,
+                            perpetuityRateAdjustment: Number(e.target.value)
+                          }
+                        }))}
+                        step="0.1"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      />
+                      <span className="text-sm text-gray-500">%</span>
+                    </div>
+                    <div className="text-xs text-gray-600 mt-1">
+                      New: {((baseScenario.perpetuityRate || model.perpetuityRate) * (1 + (formData.parameterAdjustments?.perpetuityRateAdjustment || 0) / 100)).toFixed(1)}%
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700 mb-1">Tax Rate Adjustment</label>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="number"
+                        value={formData.parameterAdjustments?.corporateTaxRateAdjustment || 0}
+                        onChange={(e) => setFormData(prev => ({
+                          ...prev,
+                          parameterAdjustments: {
+                            ...prev.parameterAdjustments,
+                            corporateTaxRateAdjustment: Number(e.target.value)
+                          }
+                        }))}
+                        step="0.1"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      />
+                      <span className="text-sm text-gray-500">%</span>
+                    </div>
+                    <div className="text-xs text-gray-600 mt-1">
+                      New: {((baseScenario.corporateTaxRate || model.corporateTaxRate) * (1 + (formData.parameterAdjustments?.corporateTaxRateAdjustment || 0) / 100)).toFixed(1)}%
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* EBITDA Adjustments */}
+              {baseScenario.inputMode === 'ebitda' && baseScenario.ebitdaData && (
+                <div className="mb-6">
+                  <h6 className="text-sm font-medium text-gray-900 mb-3">EBITDA Adjustments</h6>
+                  <div className="overflow-x-auto">
+                    <table className="w-full border-collapse border border-gray-200">
+                      <thead>
+                        <tr className="bg-gray-50">
+                          <th className="border border-gray-200 px-3 py-2 text-left text-xs font-medium text-gray-700">Year</th>
+                          <th className="border border-gray-200 px-3 py-2 text-left text-xs font-medium text-gray-700">Base EBITDA</th>
+                          <th className="border border-gray-200 px-3 py-2 text-left text-xs font-medium text-gray-700">Adjustment %</th>
+                          <th className="border border-gray-200 px-3 py-2 text-left text-xs font-medium text-gray-700">New EBITDA</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {ebitdaYears.map(year => {
+                          const baseEbitda = baseScenario.ebitdaData?.[year] || 0;
+                          const adjustment = formData.incomeStatementAdjustments?.[year]?.revenueAdjustment || 0;
+                          const newEbitda = baseEbitda * (1 + adjustment / 100);
+                          
+                          return (
+                            <tr key={year}>
+                              <td className="border border-gray-200 px-3 py-2 text-sm">{year}</td>
+                              <td className="border border-gray-200 px-3 py-2 text-sm">{baseEbitda.toLocaleString()}</td>
+                              <td className="border border-gray-200 px-3 py-2">
+                                <input
+                                  type="number"
+                                  value={adjustment}
+                                  onChange={(e) => handleAdjustmentChange(year, 'revenueAdjustment', Number(e.target.value))}
+                                  step="0.1"
+                                  className="w-20 px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+                                />
+                                <span className="ml-1 text-xs text-gray-500">%</span>
+                              </td>
+                              <td className="border border-gray-200 px-3 py-2 text-sm font-medium text-blue-600">
+                                {newEbitda.toLocaleString()}
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+
+              {/* Income Statement Adjustments */}
+              {baseScenario.inputMode === 'income-statement' && baseScenario.incomeStatementData && (
+                <div className="mb-6">
+                  <h6 className="text-sm font-medium text-gray-900 mb-3">Income Statement Adjustments</h6>
+                  <div className="space-y-4">
+                    {ebitdaYears.map(year => {
+                      const baseData = baseScenario.incomeStatementData?.[year];
+                      const adjustments = formData.incomeStatementAdjustments?.[year] || {
+                        revenueAdjustment: 0,
+                        cogsAdjustment: 0,
+                        sgaAdjustment: 0
+                      };
+                      
+                      if (!baseData) return null;
+                      
+                      const adjustedData = {
+                        revenue: baseData.revenue * (1 + (adjustments.revenueAdjustment || 0) / 100),
+                        cogs: baseData.cogs * (1 + (adjustments.cogsAdjustment || 0) / 100),
+                        sga: baseData.sga * (1 + (adjustments.sgaAdjustment || 0) / 100),
+                        depreciation: baseData.depreciation,
+                        amortization: baseData.amortization
+                      };
+                      
+                      return (
+                        <div key={year} className="border border-gray-200 rounded-lg p-4">
+                          <div className="text-sm font-medium text-gray-900 mb-3">{year}</div>
+                          
+                          {/* Adjustment Inputs */}
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                            <div>
+                              <label className="block text-xs font-medium text-gray-700 mb-1">Revenue Adjustment %</label>
+                              <div className="flex items-center gap-2">
+                                <input
+                                  type="number"
+                                  value={adjustments.revenueAdjustment || 0}
+                                  onChange={(e) => handleAdjustmentChange(year, 'revenueAdjustment', Number(e.target.value))}
+                                  step="0.1"
+                                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                />
+                                <span className="text-sm text-gray-500">%</span>
+                              </div>
+                            </div>
+                            
+                            <div>
+                              <label className="block text-xs font-medium text-gray-700 mb-1">COGS Adjustment %</label>
+                              <div className="flex items-center gap-2">
+                                <input
+                                  type="number"
+                                  value={adjustments.cogsAdjustment || 0}
+                                  onChange={(e) => handleAdjustmentChange(year, 'cogsAdjustment', Number(e.target.value))}
+                                  step="0.1"
+                                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                />
+                                <span className="text-sm text-gray-500">%</span>
+                              </div>
+                            </div>
+                            
+                            <div>
+                              <label className="block text-xs font-medium text-gray-700 mb-1">SGA Adjustment %</label>
+                              <div className="flex items-center gap-2">
+                                <input
+                                  type="number"
+                                  value={adjustments.sgaAdjustment || 0}
+                                  onChange={(e) => handleAdjustmentChange(year, 'sgaAdjustment', Number(e.target.value))}
+                                  step="0.1"
+                                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                />
+                                <span className="text-sm text-gray-500">%</span>
+                              </div>
+                            </div>
+                          </div>
+                          
+                          {/* Transformed Income Statement */}
+                          <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
+                            <div className="text-xs font-medium text-gray-700 mb-2">Transformed Income Statement</div>
+                            <div className="grid grid-cols-2 md:grid-cols-5 gap-4 text-sm">
+                              <div>
+                                <span className="text-gray-500">Revenue:</span>
+                                <div className="font-medium">{adjustedData.revenue.toLocaleString()}</div>
+                              </div>
+                              <div>
+                                <span className="text-gray-500">COGS:</span>
+                                <div className="font-medium">{adjustedData.cogs.toLocaleString()}</div>
+                              </div>
+                              <div>
+                                <span className="text-gray-500">SGA:</span>
+                                <div className="font-medium">{adjustedData.sga.toLocaleString()}</div>
+                              </div>
+                              <div>
+                                <span className="text-gray-500">Depreciation:</span>
+                                <div className="font-medium">{adjustedData.depreciation.toLocaleString()}</div>
+                              </div>
+                              <div>
+                                <span className="text-gray-500">Amortization:</span>
+                                <div className="font-medium">{adjustedData.amortization.toLocaleString()}</div>
+                              </div>
+                            </div>
+                            <div className="mt-2 pt-2 border-t border-gray-300">
+                              <span className="text-gray-500 text-sm">EBITDA:</span>
+                              <span className="ml-2 font-medium text-blue-600">
+                                {(adjustedData.revenue - adjustedData.cogs - adjustedData.sga - adjustedData.depreciation - adjustedData.amortization).toLocaleString()}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
           {formData.inputMode === 'ebitda' ? (
             // EBITDA Input
             <div className="space-y-3">

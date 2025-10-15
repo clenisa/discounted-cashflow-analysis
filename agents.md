@@ -1,23 +1,23 @@
 # Repository Guidelines
 
 ## Project Structure & Module Organization
-Core app code lives in `src/`. Valuation logic and helpers stay in `lib/`, reusable UI in `components/`, shell layout in `layouts/`, and scenario defaults in `constants/`. Hooks such as `useDCFCalculation` and `useDebouncedValue` sit in `hooks/`, while future data adapters belong in `services/`. Keep feature-specific tests co-located (e.g., `src/lib/dcf.test.ts`), and add comparison specs beside the new components.
+App code lives in `src/`. Domain math and helpers stay in `lib/`, reusable UI in `components/`, layouts in `layouts/`, and scenario presets in `constants/`. Hooks (e.g., `hooks/useDCFCalculation.ts`) manage cross-cutting logic, while API adapters belong in `services/`. Keep feature tests beside their targets (`src/lib/calculateDCF.test.ts`), and colocate story or comparison specs with the relevant component folder.
 
 ## Build, Test, and Development Commands
 - `npm install` – install dependencies (Node 18+).
-- `npm run dev` – Vite dev server with hot reload at http://localhost:5173.
-- `npm run build` – type-check via `tsc` then emit production assets.
-- `npm test` – run Vitest (jsdom environment).
-- `npm run lint` – ESLint for `.ts/.tsx` within `src/`.
+- `npm run dev` – start the Vite dev server at http://localhost:5173.
+- `npm run build` – run `tsc` type-checks then emit production assets in `dist/`.
+- `npm test` – execute Vitest in jsdom; pass `--watch` when iterating.
+- `npm run lint` – run ESLint for `.ts/.tsx` files under `src/`.
 
 ## Coding Style & Naming Conventions
-Use TypeScript React function components with PascalCase filenames (`ScenarioComparison.tsx`). Favor camelCase for utilities and state setters. Two-space indentation, Tailwind utility classes for styling, and descriptive prop names keep the UI legible. Run ESLint (and optionally Prettier) before commits to match the existing configuration.
+Write TypeScript React function components in PascalCase files (`ScenarioComparison.tsx`), and use camelCase for variables, hooks, and handler names. Indent with two spaces. Favor Tailwind utility classes for styling; add minimal inline comments only where the intent is non-obvious. Run the linter before committing; Prettier is available via your editor if needed, but ESLint is the enforced check.
 
-## Scenario Comparison Notes
-`ScenarioComparison` renders selectors, summary cards, table, and charts for any two presets. Calculations are memoized and guarded so the view stays stable until both scenarios are chosen. All “Difference” values are computed as **Scenario B minus Scenario A**, so positive results highlight where Scenario B outperforms. The table prefixes “+” for positive deltas and uses currency/percentage helpers to keep formatting consistent with the rest of the dashboard.
+## Testing Guidelines
+Vitest is the primary framework. Name test files with the `.test.ts[x]` suffix and colocate them with the code they exercise. Extend regression coverage when adjusting valuation maths (`calculateDCF`, `calculateFCF`) or comparison helpers. When UI logic changes, add component-level tests or lightweight integration specs. Use `npm test -- --coverage` when validating larger refactors, and confirm baseline outputs (PV €5.66M, EV €28.06M) still match.
 
-## Testing & QA Expectations
-Regression coverage currently centers on `calculateDCF` and `calculateFCF`; add Vitest specs when altering valuation math or comparison helpers. During manual QA, confirm baseline Base scenario outputs (PV €5.66M, EV €28.06M), verify comparison charts render after selecting two distinct scenarios, and ensure keyboard navigation reaches both dropdowns. Stress test edge cases (e.g., WACC 50%, growth 0%) to confirm error handling still routes through `calculateDCF`.
+## Security & Configuration Tips
+Supabase features require `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`. Define them in local `.env` files and Vercel project settings; never commit secrets. When the env vars are absent, the app degrades gracefully to local storage, so verify auth flows after toggling configuration. Tailwind relies on `tailwind.config.ts`; update the safelist when introducing dynamic class names.
 
 ## Commit & Pull Request Guidelines
-Follow Conventional Commits (`feat:`, `fix:`, etc.) with focused diffs and passing lint/tests. PR descriptions should summarize scenario or valuation impacts, include reproduction notes for comparison tweaks, and attach screenshots/GIFs when UI changes are visible. Mention any console warnings observed in `npm run dev` and list manual QA steps executed so QA can repeat them quickly.
+Follow Conventional Commits (`feat:`, `fix:`, `refactor:`, etc.) and keep diffs focused. Every PR should include a concise summary of valuation or UI impact, reproduction steps for comparison changes, screenshots or GIFs for visible tweaks, and a note on console warnings observed during `npm run dev`. Ensure lint, tests, and build all pass locally before requesting review.

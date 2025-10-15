@@ -1,38 +1,135 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { UnifiedLayout, ReturnProSection } from '@/layouts/UnifiedLayout';
 import { ModelManager } from '@/components/models/ModelManager';
 import { ScenarioManager } from '@/components/scenarios/ScenarioManager';
 import { DCFCalculator } from '@/components/dcf/DCFCalculator';
 import { ScenarioComparison } from '@/components/comparison/ScenarioComparison';
-import type { DCFModel, DCFScenario, DCFDataSet } from '@/types/dcf';
+import type {
+  DCFModel,
+  DCFScenario,
+  DCFDataSet,
+  EBITDAData,
+  IncomeStatementData,
+  IncomeStatementAdjustments
+} from '@/types/dcf';
 
 type DashboardView = 'models' | 'scenarios' | 'calculator' | 'comparison';
 
-interface CorporateFinanceDashboardProps {
-  onSectionChange?: (section: ReturnProSection) => void;
-}
+const normalizeEbitdaData = (data?: EBITDAData): EBITDAData | undefined => {
+  if (!data) {
+    return undefined;
+  }
+  const normalized: EBITDAData = {};
+  Object.entries(data).forEach(([year, value]) => {
+    const numericYear = Number(year);
+    if (Number.isNaN(numericYear)) {
+      return;
+    }
+    const numericValue = typeof value === 'number' ? value : Number(value ?? 0);
+    normalized[numericYear] = Number.isFinite(numericValue) ? numericValue : 0;
+  });
+  return normalized;
+};
 
-export const CorporateFinanceDashboard: React.FC<CorporateFinanceDashboardProps> = ({ onSectionChange }) => {
+const cloneIncomeStatement = (data?: IncomeStatementData): IncomeStatementData | undefined => {
+  if (!data) {
+    return undefined;
+  }
+  const clone: IncomeStatementData = {};
+  Object.entries(data).forEach(([year, entry]) => {
+    const numericYear = Number(year);
+    if (Number.isNaN(numericYear)) {
+      return;
+    }
+    clone[numericYear] = { ...entry };
+  });
+  return clone;
+};
+
+const cloneIncomeStatementAdjustments = (
+  data?: IncomeStatementAdjustments
+): IncomeStatementAdjustments | undefined => {
+  if (!data) {
+    return undefined;
+  }
+  const clone: IncomeStatementAdjustments = {};
+  Object.entries(data).forEach(([year, entry]) => {
+    const numericYear = Number(year);
+    if (Number.isNaN(numericYear)) {
+      return;
+    }
+    clone[numericYear] = { ...entry };
+  });
+  return clone;
+};
+
+export const CorporateFinanceDashboard: React.FC = () => {
   const { user } = useAuth();
   const [currentView, setCurrentView] = useState<DashboardView>('models');
   const [selectedModel, setSelectedModel] = useState<DCFModel | null>(null);
   const [selectedScenario, setSelectedScenario] = useState<DCFScenario | null>(null);
   const [scenarios, setScenarios] = useState<DCFScenario[]>([]);
 
-  // Convert DCFScenario to DCFDataSet for compatibility with existing components
-  const selectedDataSet: DCFDataSet | null = selectedScenario ? {
-    id: selectedScenario.id!,
-    label: selectedScenario.scenarioName,
-    ebitdaData: selectedScenario.ebitdaData || {},
-    parameters: {
-      discountRate: selectedScenario.discountRate || selectedModel?.discountRate || 20,
-      perpetuityRate: selectedScenario.perpetuityRate || selectedModel?.perpetuityRate || 4,
-      corporateTaxRate: selectedScenario.corporateTaxRate || selectedModel?.corporateTaxRate || 25
+  const buildDataSet = useCallback(
+    (scenario: DCFScenario | null): DCFDataSet | null => {
+      if (!scenario) {
+        return null;
+      }
+
+      let ebitda = normalizeEbitdaData(scenario.ebitdaData);
+      const modelEbitda = normalizeEbitdaData(selectedModel?.ebitdaData);
+
+      if (!ebitda || Object.keys(ebitda).length === 0) {
+        if (modelEbitda && Object.keys(modelEbitda).length > 0) {
+          ebitda = modelEbitda;
+        } else {
+          const currentYear = new Date().getFullYear();
+          ebitda = { [currentYear]: 0 };
+        }
+      }
+
+      const incomeStatement =
+        cloneIncomeStatement(scenario.incomeStatementData) ??
+        cloneIncomeStatement(selectedModel?.incomeStatementData);
+
+      const incomeStatementAdjustments =
+        cloneIncomeStatementAdjustments(scenario.incomeStatementAdjustments) ??
+        cloneIncomeStatementAdjustments(selectedModel?.incomeStatementAdjustments);
+
+      const scenarioId =
+        scenario.id ??
+        (scenario.scenarioName
+          ? scenario.scenarioName.toLowerCase().replace(/\s+/g, '-')
+          : 'temporary-scenario');
+
+      return {
+        id: scenarioId,
+        label: scenario.scenarioName ?? 'Scenario',
+        ebitdaData: ebitda,
+        parameters: {
+          discountRate: scenario.discountRate ?? selectedModel?.discountRate ?? 20,
+          perpetuityRate: scenario.perpetuityRate ?? selectedModel?.perpetuityRate ?? 4,
+          corporateTaxRate: scenario.corporateTaxRate ?? selectedModel?.corporateTaxRate ?? 25
+        },
+        useIncomeStatement: Boolean(incomeStatement && Object.keys(incomeStatement).length > 0),
+        incomeStatementData: incomeStatement,
+        incomeStatementAdjustments,
+        fiscalYearLabels: selectedModel?.fiscalYearLabels,
+        baseCurrency: selectedModel?.baseCurrency ?? 'EUR'
+      };
     },
-    useIncomeStatement: false,
-    baseCurrency: selectedModel?.baseCurrency || 'EUR'
-  } : null;
+    [selectedModel]
+  );
+
+  const selectedDataSet = useMemo(
+    () => buildDataSet(selectedScenario),
+    [selectedScenario, buildDataSet]
+  );
+
+  const comparisonDataSets = useMemo(
+    () => scenarios.map((scenario) => buildDataSet(scenario)).filter(Boolean) as DCFDataSet[],
+    [scenarios, buildDataSet]
+  );
 
   const handleModelSelect = (model: DCFModel) => {
     setSelectedModel(model);
@@ -45,101 +142,35 @@ export const CorporateFinanceDashboard: React.FC<CorporateFinanceDashboardProps>
     setCurrentView('calculator');
   };
 
-  const handleBackToModels = () => {
-    setSelectedModel(null);
+  const handleScenariosChange = useCallback((nextScenarios: DCFScenario[]) => {
+    setScenarios(nextScenarios);
+    setSelectedScenario((current) => {
+      if (!current) {
+        return current;
+      }
+      return nextScenarios.find((scenario) => scenario.id === current.id) ?? null;
+    });
+  }, []);
+
+  const handleScenarioManagerModelChange = useCallback((model: DCFModel | null) => {
+    setSelectedModel(model);
     setSelectedScenario(null);
-    setCurrentView('models');
-  };
-
-  const handleBackToScenarios = () => {
-    setSelectedScenario(null);
-    setCurrentView('scenarios');
-  };
-
-  // Generate breadcrumbs for navigation
-  const breadcrumbs = useMemo(() => {
-    const items: Array<{ label: string; href?: string }> = [{ label: 'Corporate Finance' }];
-    
-    if (selectedModel) {
-      items.push({ 
-        label: selectedModel.modelName,
-        href: `/corporate-finance/${selectedModel.id}`
-      });
+    if (!model) {
+      setScenarios([]);
     }
-    
-    if (selectedScenario) {
-      items.push({ label: selectedScenario.scenarioName });
-    }
-    
-    return items;
-  }, [selectedModel, selectedScenario]);
-
-  // Navigation header content
-  const headerContent = (
-    <div className="flex items-center space-x-4">
-      <nav className="flex space-x-8">
-        <button
-          onClick={() => setCurrentView('models')}
-          className={`py-2 px-1 border-b-2 font-medium text-sm ${
-            currentView === 'models'
-              ? 'border-primary text-primary'
-              : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
-          }`}
-        >
-          Models
-        </button>
-        
-        {selectedModel && (
-          <button
-            onClick={() => setCurrentView('scenarios')}
-            className={`py-2 px-1 border-b-2 font-medium text-sm ${
-              currentView === 'scenarios'
-                ? 'border-primary text-primary'
-                : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
-            }`}
-          >
-            Scenarios
-          </button>
-        )}
-        
-        {selectedScenario && (
-          <>
-            <button
-              onClick={() => setCurrentView('calculator')}
-              className={`py-2 px-1 border-b-2 font-medium text-sm ${
-                currentView === 'calculator'
-                  ? 'border-primary text-primary'
-                  : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
-              }`}
-            >
-              Calculator
-            </button>
-            
-            <button
-              onClick={() => setCurrentView('comparison')}
-              className={`py-2 px-1 border-b-2 font-medium text-sm ${
-                currentView === 'comparison'
-                  ? 'border-primary text-primary'
-                  : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
-              }`}
-            >
-              Comparison
-            </button>
-          </>
-        )}
-      </nav>
-    </div>
-  );
+  }, []);
 
   if (!user) {
     return (
       <div className="flex items-center justify-center min-h-96">
         <div className="text-center">
           <h2 className="text-2xl font-bold text-gray-900 mb-4">Corporate Finance Dashboard</h2>
-          <p className="text-gray-600 mb-8">Please sign in to access your DCF models and scenarios.</p>
+          <p className="text-gray-600 mb-8">
+            Please sign in to access your DCF models and scenarios.
+          </p>
           <div className="animate-pulse">
-            <div className="w-16 h-16 bg-gray-200 rounded-full mx-auto mb-4"></div>
-            <div className="h-4 bg-gray-200 rounded w-48 mx-auto"></div>
+            <div className="w-16 h-16 bg-gray-200 rounded-full mx-auto mb-4" />
+            <div className="h-4 bg-gray-200 rounded w-48 mx-auto" />
           </div>
         </div>
       </div>
@@ -147,53 +178,103 @@ export const CorporateFinanceDashboard: React.FC<CorporateFinanceDashboardProps>
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {currentView === 'models' && (
-          <ModelManager
-            onModelSelect={handleModelSelect}
-            selectedModelId={selectedModel?.id}
-          />
-        )}
-        
-        {currentView === 'scenarios' && selectedModel && (
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-semibold text-slate-900">Corporate Finance</h1>
+          {selectedModel && (
+            <p className="text-sm text-slate-500 mt-1">
+              {selectedModel.modelName}
+              {selectedScenario ? ` / ${selectedScenario.scenarioName}` : ''}
+            </p>
+          )}
+        </div>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => setCurrentView('models')}
+            className={`px-3 py-1.5 text-sm font-medium rounded-md ${
+              currentView === 'models'
+                ? 'bg-primary text-white'
+                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+            }`}
+          >
+            Models
+          </button>
+          <button
+            onClick={() => setCurrentView('scenarios')}
+            className={`px-3 py-1.5 text-sm font-medium rounded-md ${
+              currentView === 'scenarios'
+                ? 'bg-primary text-white'
+                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+            }`}
+            disabled={!selectedModel}
+          >
+            Scenarios
+          </button>
+          <button
+            onClick={() => setCurrentView('calculator')}
+            className={`px-3 py-1.5 text-sm font-medium rounded-md ${
+              currentView === 'calculator'
+                ? 'bg-primary text-white'
+                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+            }`}
+            disabled={!selectedScenario}
+          >
+            Calculator
+          </button>
+          <button
+            onClick={() => setCurrentView('comparison')}
+            className={`px-3 py-1.5 text-sm font-medium rounded-md ${
+              currentView === 'comparison'
+                ? 'bg-primary text-white'
+                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+            }`}
+            disabled={comparisonDataSets.length < 2}
+          >
+            Comparison
+          </button>
+        </div>
+      </div>
+
+      {currentView === 'models' && (
+        <ModelManager onModelSelect={handleModelSelect} selectedModelId={selectedModel?.id} />
+      )}
+
+      {currentView === 'scenarios' && (
+        <div className="bg-white shadow rounded-lg border border-slate-200 p-6">
           <ScenarioManager
             onScenarioSelect={handleScenarioSelect}
             selectedScenarioId={selectedScenario?.id}
+            selectedModelId={selectedModel?.id}
+            onModelChange={handleScenarioManagerModelChange}
+            onScenariosChange={handleScenariosChange}
           />
-        )}
-        
-        {currentView === 'calculator' && selectedDataSet && (
-          <div className="space-y-6">
-            <div className="bg-white shadow rounded-lg p-6">
-              <h2 className="text-lg font-medium text-gray-900 mb-4">
-                DCF Calculator - {selectedScenario?.scenarioName}
+        </div>
+      )}
+
+      {currentView === 'calculator' && (
+        <div className="bg-white shadow rounded-lg border border-slate-200 p-6">
+          {selectedDataSet ? (
+            <>
+              <h2 className="text-lg font-medium text-slate-900 mb-4">
+                DCF Calculator — {selectedDataSet.label}
               </h2>
               <DCFCalculator dataSet={selectedDataSet} />
+            </>
+          ) : (
+            <div className="text-center text-slate-500 py-12">
+              Select a scenario with financial data to view calculations.
             </div>
-          </div>
-        )}
-        
-        {currentView === 'comparison' && scenarios.length > 0 && (
-          <div className="space-y-6">
-            <div className="bg-white shadow rounded-lg p-6">
-              <h2 className="text-lg font-medium text-gray-900 mb-4">
-                Scenario Comparison
-              </h2>
-              <ScenarioComparison scenarios={scenarios.map(s => ({
-                id: s.id!,
-                label: s.scenarioName,
-                ebitdaData: s.ebitdaData || {},
-                parameters: {
-                  discountRate: s.discountRate || selectedModel?.discountRate || 20,
-                  perpetuityRate: s.perpetuityRate || selectedModel?.perpetuityRate || 4,
-                  corporateTaxRate: s.corporateTaxRate || selectedModel?.corporateTaxRate || 25
-                },
-                useIncomeStatement: false,
-                baseCurrency: selectedModel?.baseCurrency || 'EUR'
-              }))} />
-            </div>
-          </div>
-        )}
-      </div>
+          )}
+        </div>
+      )}
+
+      {currentView === 'comparison' && comparisonDataSets.length > 0 && (
+        <div className="bg-white shadow rounded-lg border border-slate-200 p-6">
+          <h2 className="text-lg font-medium text-slate-900 mb-4">Scenario Comparison</h2>
+          <ScenarioComparison scenarios={comparisonDataSets} />
+        </div>
+      )}
+    </div>
   );
 };

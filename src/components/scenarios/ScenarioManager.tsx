@@ -6,24 +6,44 @@ import type { DCFModel, DCFScenario, IncomeStatementData, IncomeStatementAdjustm
 interface ScenarioManagerProps {
   onScenarioSelect: (scenario: DCFScenario) => void;
   selectedScenarioId?: string;
+  selectedModelId?: string;
+  onModelChange?: (model: DCFModel | null) => void;
+  onScenariosChange?: (scenarios: DCFScenario[]) => void;
 }
 
 export const ScenarioManager: React.FC<ScenarioManagerProps> = ({
   onScenarioSelect,
-  selectedScenarioId
+  selectedScenarioId,
+  selectedModelId: controlledModelId,
+  onModelChange,
+  onScenariosChange
 }) => {
   const { user } = useAuth();
   const dataService = useDataService();
   const [models, setModels] = useState<DCFModel[]>([]);
   const [scenarios, setScenarios] = useState<DCFScenario[]>([]);
-  const [selectedModelId, setSelectedModelId] = useState<string>('');
+  const [activeModelId, setActiveModelId] = useState<string>(controlledModelId ?? '');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const selectedModel = useMemo(
-    () => models.find((model) => model.id === selectedModelId) ?? null,
-    [models, selectedModelId]
+    () => models.find((model) => model.id === activeModelId) ?? null,
+    [models, activeModelId]
   );
+
+  useEffect(() => {
+    if (controlledModelId && controlledModelId !== activeModelId) {
+      setActiveModelId(controlledModelId);
+    }
+  }, [controlledModelId, activeModelId]);
+
+  useEffect(() => {
+    onModelChange?.(selectedModel ?? null);
+  }, [selectedModel, onModelChange]);
+
+  useEffect(() => {
+    onScenariosChange?.(scenarios);
+  }, [scenarios, onScenariosChange]);
 
   // Load user's models
   useEffect(() => {
@@ -36,7 +56,10 @@ export const ScenarioManager: React.FC<ScenarioManagerProps> = ({
         setModels(userModels);
         
         if (userModels.length > 0) {
-          setSelectedModelId(userModels[0].id!);
+          const initialModel = controlledModelId
+            ? userModels.find((model) => model.id === controlledModelId) ?? userModels[0]
+            : userModels[0];
+          setActiveModelId(initialModel.id ?? '');
         }
       } catch (err) {
         setError('Failed to load models');
@@ -47,16 +70,16 @@ export const ScenarioManager: React.FC<ScenarioManagerProps> = ({
     };
 
     loadModels();
-  }, [user, dataService]);
+  }, [user, dataService, controlledModelId]);
 
   // Load scenarios for selected model
   useEffect(() => {
     const loadScenarios = async () => {
-      if (!selectedModelId) return;
+      if (!activeModelId) return;
       
       try {
         setLoading(true);
-        const modelScenarios = await dataService.listScenarios(selectedModelId);
+        const modelScenarios = await dataService.listScenarios(activeModelId);
         setScenarios(modelScenarios);
       } catch (err) {
         setError('Failed to load scenarios');
@@ -67,10 +90,10 @@ export const ScenarioManager: React.FC<ScenarioManagerProps> = ({
     };
 
     loadScenarios();
-  }, [selectedModelId, dataService]);
+  }, [activeModelId, dataService]);
 
   const handleModelChange = (modelId: string) => {
-    setSelectedModelId(modelId);
+    setActiveModelId(modelId);
   };
 
   const handleScenarioSelect = (scenario: DCFScenario) => {
@@ -120,14 +143,14 @@ export const ScenarioManager: React.FC<ScenarioManagerProps> = ({
   };
 
   const handleCreateScenario = async () => {
-    if (!selectedModelId) return;
+    if (!activeModelId) return;
     
     try {
       setError(null);
 
       const newScenario: Omit<DCFScenario, 'id'> = {
         userId: user?.id,
-        modelId: selectedModelId,
+        modelId: activeModelId,
         scenarioName: getUniqueScenarioName(),
         description: '',
         discountRate: selectedModel?.discountRate,
@@ -184,7 +207,7 @@ export const ScenarioManager: React.FC<ScenarioManagerProps> = ({
         </label>
         <select
           id="model-select"
-          value={selectedModelId}
+          value={activeModelId}
           onChange={(e) => handleModelChange(e.target.value)}
           className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
         >
@@ -198,7 +221,7 @@ export const ScenarioManager: React.FC<ScenarioManagerProps> = ({
       </div>
 
       {/* Scenarios List */}
-      {selectedModelId && (
+      {activeModelId && (
         <div>
           <div className="flex items-center justify-between mb-3">
             <h3 className="text-lg font-medium text-gray-900">Scenarios</h3>

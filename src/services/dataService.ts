@@ -247,7 +247,7 @@ export class SupabaseDataService implements DataService {
   }
 
   async deleteModel(id: string): Promise<void> {
-    const { error } = await this.supabase
+    const { error } = await this.supabaseClient
       .from('dcf_models')
       .delete()
       .eq('id', id);
@@ -324,7 +324,7 @@ export class SupabaseDataService implements DataService {
   }
 
   async deleteScenario(id: string): Promise<void> {
-    const { error } = await this.supabase
+    const { error } = await this.supabaseClient
       .from('dcf_scenarios')
       .delete()
       .eq('id', id);
@@ -340,7 +340,7 @@ export class SupabaseDataService implements DataService {
       sort_order: index
     }));
 
-    const { error } = await this.supabase
+    const { error } = await this.supabaseClient
       .from('dcf_scenarios')
       .upsert(updates);
 
@@ -378,7 +378,7 @@ export class SupabaseDataService implements DataService {
   }
 
   async updateSharePermissions(shareId: string, permissions: SharingPermissions): Promise<void> {
-    const { error } = await this.supabase
+    const { error } = await this.supabaseClient
       .from('dcf_model_shares')
       .update({
         can_view: permissions.canView,
@@ -394,7 +394,7 @@ export class SupabaseDataService implements DataService {
   }
 
   async revokeShare(shareId: string): Promise<void> {
-    const { error } = await this.supabase
+    const { error } = await this.supabaseClient
       .from('dcf_model_shares')
       .delete()
       .eq('id', shareId);
@@ -498,7 +498,7 @@ export class SupabaseDataService implements DataService {
   }
 
   async deleteTemplate(id: string): Promise<void> {
-    const { error } = await this.supabase
+    const { error } = await this.supabaseClient
       .from('financial_data_templates')
       .delete()
       .eq('id', id);
@@ -509,7 +509,7 @@ export class SupabaseDataService implements DataService {
   }
 
   async incrementTemplateUsage(templateId: string): Promise<void> {
-    const { error } = await this.supabase
+    const { error } = await this.supabaseClient
       .rpc('increment_template_usage', { template_id: templateId });
 
     if (error) {

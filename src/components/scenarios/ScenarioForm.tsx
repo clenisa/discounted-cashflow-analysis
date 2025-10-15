@@ -732,7 +732,7 @@ export const ScenarioForm: React.FC<ScenarioFormProps> = ({
 
               {/* Financial Data Adjustments */}
               <div className="mb-6">
-                {baseScenario.inputMode === 'ebitda' && baseScenario.ebitdaData ? (
+                {baseScenario.ebitdaData && Object.keys(baseScenario.ebitdaData).length > 0 ? (
                   <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
                     <h6 className="text-sm font-medium text-gray-900 mb-3">EBITDA Adjustments (%)</h6>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -768,7 +768,7 @@ export const ScenarioForm: React.FC<ScenarioFormProps> = ({
                       })}
                     </div>
                   </div>
-                ) : baseScenario.inputMode === 'income-statement' && baseScenario.incomeStatementData ? (
+                ) : baseScenario.incomeStatementData && Object.keys(baseScenario.incomeStatementData).length > 0 ? (
                   <div className="p-4 bg-purple-50 border border-purple-200 rounded-lg">
                     <h6 className="text-sm font-medium text-gray-900 mb-3">Income Statement Adjustments (%)</h6>
                     <div className="space-y-4">
@@ -878,6 +878,17 @@ export const ScenarioForm: React.FC<ScenarioFormProps> = ({
                       Has EBITDA data: {baseScenario.ebitdaData ? 'Yes' : 'No'}
                       <br />
                       Has Income Statement data: {baseScenario.incomeStatementData ? 'Yes' : 'No'}
+                      <br />
+                      <br />
+                      <strong>Debug Info:</strong>
+                      <br />
+                      Base scenario object keys: {Object.keys(baseScenario).join(', ')}
+                      <br />
+                      Base scenario inputMode value: "{baseScenario.inputMode}"
+                      <br />
+                      Base scenario inputMode type: {typeof baseScenario.inputMode}
+                      <br />
+                      EBITDA data keys: {baseScenario.ebitdaData ? Object.keys(baseScenario.ebitdaData).join(', ') : 'No EBITDA data'}
                     </div>
                   </div>
                 )}

@@ -342,8 +342,9 @@ export const ScenarioForm: React.FC<ScenarioFormProps> = ({
 
       let savedScenario: DCFScenario;
       if (isEditing && scenario?.id) {
-        // Update existing scenario - for now, just save as new since updateScenario doesn't exist
-        const scenarioId = await dataService.saveScenario(scenarioData as DCFScenario);
+        // Update existing scenario - include the ID so upsert works correctly
+        const scenarioWithId = { ...scenarioData, id: scenario.id } as DCFScenario;
+        const scenarioId = await dataService.saveScenario(scenarioWithId);
         const loaded = await dataService.loadScenario(scenarioId);
         if (!loaded) throw new Error('Failed to load updated scenario');
         savedScenario = loaded;

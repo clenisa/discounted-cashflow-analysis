@@ -104,6 +104,15 @@ export const UnifiedLayout: React.FC<UnifiedLayoutProps> = ({
                 <span>Carlos Master Dash v1.3</span>
                 <ExternalLink size={18} aria-hidden />
               </a>
+              <a
+                href="https://carloslenis.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex w-full items-center justify-between rounded-lg bg-primary/10 px-4 py-3 text-sm font-medium text-primary transition-colors hover:bg-primary/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
+              >
+                <span>Visit Carlos Lenis</span>
+                <ExternalLink size={18} aria-hidden />
+              </a>
               <button
                 type="button"
                 className="flex w-full items-center justify-between rounded-lg bg-slate-800 px-4 py-3 text-sm text-slate-200 hover:bg-slate-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40"

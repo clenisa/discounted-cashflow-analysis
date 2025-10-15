@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useDataService } from '@/hooks/useDataService';
 import { useAuth } from '@/contexts/AuthContext';
-import type { DCFModel, DCFScenario } from '@/types/dcf';
+import type { DCFModel, DCFScenario, IncomeStatementData, IncomeStatementAdjustments } from '@/types/dcf';
 
 interface ScenarioManagerProps {
   onScenarioSelect: (scenario: DCFScenario) => void;
@@ -19,6 +19,11 @@ export const ScenarioManager: React.FC<ScenarioManagerProps> = ({
   const [selectedModelId, setSelectedModelId] = useState<string>('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const selectedModel = useMemo(
+    () => models.find((model) => model.id === selectedModelId) ?? null,
+    [models, selectedModelId]
+  );
 
   // Load user's models
   useEffect(() => {
@@ -72,6 +77,34 @@ export const ScenarioManager: React.FC<ScenarioManagerProps> = ({
     onScenarioSelect(scenario);
   };
 
+  const cloneIncomeStatement = (data?: IncomeStatementData) => {
+    if (!data) return undefined;
+    return Object.fromEntries(
+      Object.entries(data).map(([year, entry]) => [
+        Number(year),
+        { ...entry }
+      ])
+    );
+  };
+
+  const cloneIncomeStatementAdjustments = (data?: IncomeStatementAdjustments) => {
+    if (!data) return undefined;
+    return Object.fromEntries(
+      Object.entries(data).map(([year, entry]) => [
+        Number(year),
+        { ...entry }
+      ])
+    );
+  };
+
+  const getDefaultEbitdaData = () => {
+    if (selectedModel?.ebitdaData && Object.keys(selectedModel.ebitdaData).length > 0) {
+      return { ...selectedModel.ebitdaData };
+    }
+    const currentYear = new Date().getFullYear();
+    return { [currentYear]: 0 };
+  };
+
   const getUniqueScenarioName = () => {
     const baseName = 'New Scenario';
     if (!scenarios.some((scenario) => scenario.scenarioName === baseName)) {
@@ -90,11 +123,19 @@ export const ScenarioManager: React.FC<ScenarioManagerProps> = ({
     if (!selectedModelId) return;
     
     try {
+      setError(null);
+
       const newScenario: Omit<DCFScenario, 'id'> = {
         userId: user?.id,
         modelId: selectedModelId,
         scenarioName: getUniqueScenarioName(),
         description: '',
+        discountRate: selectedModel?.discountRate,
+        perpetuityRate: selectedModel?.perpetuityRate,
+        corporateTaxRate: selectedModel?.corporateTaxRate,
+        ebitdaData: getDefaultEbitdaData(),
+        incomeStatementData: cloneIncomeStatement(selectedModel?.incomeStatementData),
+        incomeStatementAdjustments: cloneIncomeStatementAdjustments(selectedModel?.incomeStatementAdjustments),
         isBaseScenario: false,
         sortOrder: scenarios.length
       };

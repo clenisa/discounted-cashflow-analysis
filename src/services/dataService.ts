@@ -479,7 +479,7 @@ export class SupabaseDataService implements DataService {
   }
 
   async listTemplates(category?: string): Promise<FinancialDataTemplate[]> {
-    let query = this.supabase
+    let query = this.supabaseClient
       .from('financial_data_templates')
       .select('*')
       .order('usage_count', { ascending: false });

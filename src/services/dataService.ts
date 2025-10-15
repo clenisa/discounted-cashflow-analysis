@@ -87,6 +87,91 @@ export class LocalDataService implements DataService {
   async deleteModel(id: string): Promise<void> {
     localStorage.removeItem(`dcf_model_${id}`);
   }
+
+  // Stub implementations for new interface methods
+  async saveScenario(scenario: DCFScenario): Promise<string> {
+    throw new Error('LocalDataService does not support scenarios. Use SupabaseDataService.');
+  }
+
+  async loadScenario(id: string): Promise<DCFScenario | null> {
+    throw new Error('LocalDataService does not support scenarios. Use SupabaseDataService.');
+  }
+
+  async listScenarios(modelId: string): Promise<DCFScenario[]> {
+    throw new Error('LocalDataService does not support scenarios. Use SupabaseDataService.');
+  }
+
+  async deleteScenario(id: string): Promise<void> {
+    throw new Error('LocalDataService does not support scenarios. Use SupabaseDataService.');
+  }
+
+  async reorderScenarios(modelId: string, scenarioIds: string[]): Promise<void> {
+    throw new Error('LocalDataService does not support scenarios. Use SupabaseDataService.');
+  }
+
+  async shareModel(modelId: string, shareData: Partial<DCFModelShare>): Promise<string> {
+    throw new Error('LocalDataService does not support sharing. Use SupabaseDataService.');
+  }
+
+  async updateSharePermissions(shareId: string, permissions: SharingPermissions): Promise<void> {
+    throw new Error('LocalDataService does not support sharing. Use SupabaseDataService.');
+  }
+
+  async revokeShare(shareId: string): Promise<void> {
+    throw new Error('LocalDataService does not support sharing. Use SupabaseDataService.');
+  }
+
+  async listSharedModels(): Promise<DCFModelWithAccess[]> {
+    throw new Error('LocalDataService does not support sharing. Use SupabaseDataService.');
+  }
+
+  async listModelShares(modelId: string): Promise<DCFModelShare[]> {
+    throw new Error('LocalDataService does not support sharing. Use SupabaseDataService.');
+  }
+
+  async saveTemplate(template: FinancialDataTemplate): Promise<string> {
+    throw new Error('LocalDataService does not support templates. Use SupabaseDataService.');
+  }
+
+  async loadTemplate(id: string): Promise<FinancialDataTemplate | null> {
+    throw new Error('LocalDataService does not support templates. Use SupabaseDataService.');
+  }
+
+  async listTemplates(category?: string): Promise<FinancialDataTemplate[]> {
+    throw new Error('LocalDataService does not support templates. Use SupabaseDataService.');
+  }
+
+  async deleteTemplate(id: string): Promise<void> {
+    throw new Error('LocalDataService does not support templates. Use SupabaseDataService.');
+  }
+
+  async incrementTemplateUsage(templateId: string): Promise<void> {
+    throw new Error('LocalDataService does not support templates. Use SupabaseDataService.');
+  }
+
+  async createModelVersion(modelId: string, changeSummary?: string, changeType?: string): Promise<string> {
+    throw new Error('LocalDataService does not support versioning. Use SupabaseDataService.');
+  }
+
+  async listModelVersions(modelId: string): Promise<DCFModelVersion[]> {
+    throw new Error('LocalDataService does not support versioning. Use SupabaseDataService.');
+  }
+
+  async loadModelVersion(versionId: string): Promise<DCFModelVersion | null> {
+    throw new Error('LocalDataService does not support versioning. Use SupabaseDataService.');
+  }
+
+  async restoreModelFromVersion(modelId: string, versionId: string): Promise<void> {
+    throw new Error('LocalDataService does not support versioning. Use SupabaseDataService.');
+  }
+
+  async getModelStats(modelId: string): Promise<DCFModelStats | null> {
+    throw new Error('LocalDataService does not support statistics. Use SupabaseDataService.');
+  }
+
+  async getUserModelStats(): Promise<DCFModelStats[]> {
+    throw new Error('LocalDataService does not support statistics. Use SupabaseDataService.');
+  }
 }
 
 export class SupabaseDataService implements DataService {
@@ -94,7 +179,7 @@ export class SupabaseDataService implements DataService {
 
   // Model operations
   async saveModel(model: DCFModel): Promise<string> {
-    const { data, error } = await this.supabaseClient
+    const { data, error } = await this.supabaseClientClient
       .from('dcf_models')
       .upsert({
         ...model,
@@ -132,7 +217,7 @@ export class SupabaseDataService implements DataService {
   }
 
   async loadModel(id: string): Promise<DCFModel | null> {
-    const { data, error } = await this.supabaseClient
+    const { data, error } = await this.supabaseClientClient
       .from('dcf_models')
       .select('*')
       .eq('id', id)
@@ -149,7 +234,7 @@ export class SupabaseDataService implements DataService {
   }
 
   async listModels(): Promise<DCFModel[]> {
-    const { data, error } = await this.supabaseClient
+    const { data, error } = await this.supabaseClientClient
       .from('dcf_models')
       .select('*')
       .order('updated_at', { ascending: false });
@@ -174,7 +259,7 @@ export class SupabaseDataService implements DataService {
 
   // Scenario operations
   async saveScenario(scenario: DCFScenario): Promise<string> {
-    const { data, error } = await this.supabaseClient
+    const { data, error } = await this.supabaseClientClient
       .from('dcf_scenarios')
       .upsert({
         ...scenario,
@@ -208,7 +293,7 @@ export class SupabaseDataService implements DataService {
   }
 
   async loadScenario(id: string): Promise<DCFScenario | null> {
-    const { data, error } = await this.supabaseClient
+    const { data, error } = await this.supabaseClientClient
       .from('dcf_scenarios')
       .select('*')
       .eq('id', id)
@@ -225,7 +310,7 @@ export class SupabaseDataService implements DataService {
   }
 
   async listScenarios(modelId: string): Promise<DCFScenario[]> {
-    const { data, error } = await this.supabaseClient
+    const { data, error } = await this.supabaseClientClient
       .from('dcf_scenarios')
       .select('*')
       .eq('model_id', modelId)
@@ -266,7 +351,7 @@ export class SupabaseDataService implements DataService {
 
   // Sharing operations
   async shareModel(modelId: string, shareData: Partial<DCFModelShare>): Promise<string> {
-    const { data, error } = await this.supabaseClient
+    const { data, error } = await this.supabaseClientClient
       .from('dcf_model_shares')
       .insert({
         model_id: modelId,
@@ -320,7 +405,7 @@ export class SupabaseDataService implements DataService {
   }
 
   async listSharedModels(): Promise<DCFModelWithAccess[]> {
-    const { data, error } = await this.supabaseClient
+    const { data, error } = await this.supabaseClientClient
       .from('user_accessible_models')
       .select('*');
 
@@ -332,7 +417,7 @@ export class SupabaseDataService implements DataService {
   }
 
   async listModelShares(modelId: string): Promise<DCFModelShare[]> {
-    const { data, error } = await this.supabaseClient
+    const { data, error } = await this.supabaseClientClient
       .from('dcf_model_shares')
       .select('*')
       .eq('model_id', modelId);
@@ -346,7 +431,7 @@ export class SupabaseDataService implements DataService {
 
   // Template operations
   async saveTemplate(template: FinancialDataTemplate): Promise<string> {
-    const { data, error } = await this.supabaseClient
+    const { data, error } = await this.supabaseClientClient
       .from('financial_data_templates')
       .upsert({
         ...template,
@@ -377,7 +462,7 @@ export class SupabaseDataService implements DataService {
   }
 
   async loadTemplate(id: string): Promise<FinancialDataTemplate | null> {
-    const { data, error } = await this.supabaseClient
+    const { data, error } = await this.supabaseClientClient
       .from('financial_data_templates')
       .select('*')
       .eq('id', id)
@@ -434,7 +519,7 @@ export class SupabaseDataService implements DataService {
 
   // Version operations
   async createModelVersion(modelId: string, changeSummary?: string, changeType?: string): Promise<string> {
-    const { data, error } = await this.supabaseClient
+    const { data, error } = await this.supabaseClientClient
       .from('dcf_model_versions')
       .insert({
         model_id: modelId,
@@ -452,7 +537,7 @@ export class SupabaseDataService implements DataService {
   }
 
   async listModelVersions(modelId: string): Promise<DCFModelVersion[]> {
-    const { data, error } = await this.supabaseClient
+    const { data, error } = await this.supabaseClientClient
       .from('dcf_model_versions')
       .select('*')
       .eq('model_id', modelId)
@@ -466,7 +551,7 @@ export class SupabaseDataService implements DataService {
   }
 
   async loadModelVersion(versionId: string): Promise<DCFModelVersion | null> {
-    const { data, error } = await this.supabaseClient
+    const { data, error } = await this.supabaseClientClient
       .from('dcf_model_versions')
       .select('*')
       .eq('id', versionId)
@@ -497,7 +582,7 @@ export class SupabaseDataService implements DataService {
 
   // Statistics and analytics
   async getModelStats(modelId: string): Promise<DCFModelStats | null> {
-    const { data, error } = await this.supabaseClient
+    const { data, error } = await this.supabaseClientClient
       .from('dcf_model_stats')
       .select('*')
       .eq('id', modelId)
@@ -514,7 +599,7 @@ export class SupabaseDataService implements DataService {
   }
 
   async getUserModelStats(): Promise<DCFModelStats[]> {
-    const { data, error } = await this.supabaseClient
+    const { data, error } = await this.supabaseClientClient
       .from('dcf_model_stats')
       .select('*')
       .order('updated_at', { ascending: false });

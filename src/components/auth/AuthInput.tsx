@@ -3,27 +3,27 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Lock, Unlock } from 'lucide-react';
 
 export const AuthInput: React.FC = () => {
-  const { isAuthenticated, authenticate, logout } = useAuth();
+  const { user, signOut } = useAuth();
   const [inputValue, setInputValue] = useState('');
   const [showInput, setShowInput] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    authenticate(inputValue);
+    // This is a legacy component - in the new auth system, users should use the auth modal
     setInputValue('');
     setShowInput(false);
   };
 
   const handleLogout = () => {
-    logout();
+    signOut();
   };
 
-  if (isAuthenticated) {
+  if (user) {
     return (
       <div className="flex items-center gap-2">
         <div className="flex items-center gap-2 text-green-600">
           <Unlock size={16} />
-          <span className="text-sm font-medium">Authenticated</span>
+          <span className="text-sm font-medium">Signed In</span>
         </div>
         <button
           onClick={handleLogout}

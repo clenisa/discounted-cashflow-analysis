@@ -11,6 +11,11 @@ import type {
   SharingPermissions
 } from '@/types/dcf';
 
+const sanitizePayload = (payload: Record<string, unknown>) =>
+  Object.fromEntries(
+    Object.entries(payload).filter(([, value]) => value !== undefined)
+  );
+
 export interface DataService {
   // Model operations
   saveModel(model: DCFModel): Promise<string>;
@@ -178,33 +183,36 @@ export class SupabaseDataService implements DataService {
 
   // Model operations
   async saveModel(model: DCFModel): Promise<string> {
+    const payload = sanitizePayload({
+      id: model.id,
+      user_id: model.userId,
+      model_name: model.modelName,
+      company_name: model.companyName,
+      description: model.description,
+      discount_rate: model.discountRate,
+      perpetuity_rate: model.perpetuityRate,
+      corporate_tax_rate: model.corporateTaxRate,
+      ebitda_data: model.ebitdaData,
+      income_statement_data: model.incomeStatementData,
+      income_statement_adjustments: model.incomeStatementAdjustments,
+      fiscal_year_labels: model.fiscalYearLabels,
+      use_income_statement: model.useIncomeStatement,
+      base_currency: model.baseCurrency,
+      enterprise_value: model.enterpriseValue,
+      terminal_value: model.terminalValue,
+      terminal_value_pv: model.terminalValuePV,
+      projections_pv: model.projectionsPV,
+      present_values: model.presentValues,
+      is_template: model.isTemplate,
+      is_public: model.isPublic,
+      tags: model.tags,
+      created_at: model.createdAt,
+      updated_at: model.updatedAt
+    });
+
     const { data, error } = await this.supabaseClient
       .from('dcf_models')
-      .upsert({
-        ...model,
-        user_id: model.userId,
-        model_name: model.modelName,
-        company_name: model.companyName,
-        discount_rate: model.discountRate,
-        perpetuity_rate: model.perpetuityRate,
-        corporate_tax_rate: model.corporateTaxRate,
-        ebitda_data: model.ebitdaData,
-        income_statement_data: model.incomeStatementData,
-        income_statement_adjustments: model.incomeStatementAdjustments,
-        fiscal_year_labels: model.fiscalYearLabels,
-        use_income_statement: model.useIncomeStatement,
-        base_currency: model.baseCurrency,
-        enterprise_value: model.enterpriseValue,
-        terminal_value: model.terminalValue,
-        terminal_value_pv: model.terminalValuePV,
-        projections_pv: model.projectionsPV,
-        present_values: model.presentValues,
-        is_template: model.isTemplate,
-        is_public: model.isPublic,
-        tags: model.tags,
-        created_at: model.createdAt,
-        updated_at: model.updatedAt
-      })
+      .upsert(payload)
       .select()
       .single();
 
@@ -258,29 +266,32 @@ export class SupabaseDataService implements DataService {
 
   // Scenario operations
   async saveScenario(scenario: DCFScenario): Promise<string> {
+    const payload = sanitizePayload({
+      id: scenario.id,
+      user_id: scenario.userId,
+      model_id: scenario.modelId,
+      scenario_name: scenario.scenarioName,
+      description: scenario.description,
+      discount_rate: scenario.discountRate,
+      perpetuity_rate: scenario.perpetuityRate,
+      corporate_tax_rate: scenario.corporateTaxRate,
+      ebitda_data: scenario.ebitdaData,
+      income_statement_data: scenario.incomeStatementData,
+      income_statement_adjustments: scenario.incomeStatementAdjustments,
+      enterprise_value: scenario.enterpriseValue,
+      terminal_value: scenario.terminalValue,
+      terminal_value_pv: scenario.terminalValuePV,
+      projections_pv: scenario.projectionsPV,
+      present_values: scenario.presentValues,
+      is_base_scenario: scenario.isBaseScenario,
+      sort_order: scenario.sortOrder,
+      created_at: scenario.createdAt,
+      updated_at: scenario.updatedAt
+    });
+
     const { data, error } = await this.supabaseClient
       .from('dcf_scenarios')
-      .upsert({
-        ...scenario,
-        user_id: scenario.userId,
-        model_id: scenario.modelId,
-        scenario_name: scenario.scenarioName,
-        discount_rate: scenario.discountRate,
-        perpetuity_rate: scenario.perpetuityRate,
-        corporate_tax_rate: scenario.corporateTaxRate,
-        ebitda_data: scenario.ebitdaData,
-        income_statement_data: scenario.incomeStatementData,
-        income_statement_adjustments: scenario.incomeStatementAdjustments,
-        enterprise_value: scenario.enterpriseValue,
-        terminal_value: scenario.terminalValue,
-        terminal_value_pv: scenario.terminalValuePV,
-        projections_pv: scenario.projectionsPV,
-        present_values: scenario.presentValues,
-        is_base_scenario: scenario.isBaseScenario,
-        sort_order: scenario.sortOrder,
-        created_at: scenario.createdAt,
-        updated_at: scenario.updatedAt
-      })
+      .upsert(payload)
       .select()
       .single();
 
@@ -430,26 +441,30 @@ export class SupabaseDataService implements DataService {
 
   // Template operations
   async saveTemplate(template: FinancialDataTemplate): Promise<string> {
+    const payload = sanitizePayload({
+      id: template.id,
+      created_by_user_id: template.createdByUserId,
+      template_name: template.templateName,
+      description: template.description,
+      category: template.category,
+      ebitda_data: template.ebitdaData,
+      income_statement_data: template.incomeStatementData,
+      fiscal_year_labels: template.fiscalYearLabels,
+      base_currency: template.baseCurrency,
+      default_discount_rate: template.defaultDiscountRate,
+      default_perpetuity_rate: template.defaultPerpetuityRate,
+      default_corporate_tax_rate: template.defaultCorporateTaxRate,
+      is_public: template.isPublic,
+      is_system_template: template.isSystemTemplate,
+      tags: template.tags,
+      usage_count: template.usageCount,
+      created_at: template.createdAt,
+      updated_at: template.updatedAt
+    });
+
     const { data, error } = await this.supabaseClient
       .from('financial_data_templates')
-      .upsert({
-        ...template,
-        created_by_user_id: template.createdByUserId,
-        template_name: template.templateName,
-        ebitda_data: template.ebitdaData,
-        income_statement_data: template.incomeStatementData,
-        fiscal_year_labels: template.fiscalYearLabels,
-        base_currency: template.baseCurrency,
-        default_discount_rate: template.defaultDiscountRate,
-        default_perpetuity_rate: template.defaultPerpetuityRate,
-        default_corporate_tax_rate: template.defaultCorporateTaxRate,
-        is_public: template.isPublic,
-        is_system_template: template.isSystemTemplate,
-        tags: template.tags,
-        usage_count: template.usageCount,
-        created_at: template.createdAt,
-        updated_at: template.updatedAt
-      })
+      .upsert(payload)
       .select()
       .single();
 

@@ -351,35 +351,37 @@ const AppContent = () => {
 
   return (
     <>
-      {activeSection === 'corporate-finance' ? (
-        <CorporateFinanceDashboard />
-      ) : (
-        <ReturnProLayout activeSection={activeSection} onSectionChange={setActiveSection} headerContent={headerContent}>
-          {activeSection === 'comparison' ? (
-            <ScenarioComparison scenarios={scenarios} />
-          ) : activeSection === 'financial-data' && selectedScenario ? (
-            <FinancialDataTab
-              scenario={selectedScenario}
-              onLabelChange={handleLabelChange}
-              onEbitdaChange={handleEbitdaChange}
-              onParametersChange={handleParametersChange}
-              onIncomeStatementToggle={handleIncomeStatementToggle}
-              onIncomeStatementChange={handleIncomeStatementChange}
-              onAdjustmentChange={handleAdjustmentChange}
-            />
-          ) : activeSection === 'dcf' && selectedScenario ? (
-            <DCFCalculator
-              dataSet={selectedScenario}
-            />
-          ) : (
-            <div className="flex items-center justify-center h-64">
-              <div className="text-center">
-                <p className="text-slate-500">Please select a scenario to view details.</p>
-              </div>
+      <ReturnProLayout 
+        activeSection={activeSection} 
+        onSectionChange={setActiveSection} 
+        headerContent={headerContent}
+      >
+        {activeSection === 'corporate-finance' ? (
+          <CorporateFinanceDashboard onSectionChange={setActiveSection} />
+        ) : activeSection === 'comparison' ? (
+          <ScenarioComparison scenarios={scenarios} />
+        ) : activeSection === 'financial-data' && selectedScenario ? (
+          <FinancialDataTab
+            scenario={selectedScenario}
+            onLabelChange={handleLabelChange}
+            onEbitdaChange={handleEbitdaChange}
+            onParametersChange={handleParametersChange}
+            onIncomeStatementToggle={handleIncomeStatementToggle}
+            onIncomeStatementChange={handleIncomeStatementChange}
+            onAdjustmentChange={handleAdjustmentChange}
+          />
+        ) : activeSection === 'dcf' && selectedScenario ? (
+          <DCFCalculator
+            dataSet={selectedScenario}
+          />
+        ) : (
+          <div className="flex items-center justify-center h-64">
+            <div className="text-center">
+              <p className="text-slate-500">Please select a scenario to view details.</p>
             </div>
-          )}
-        </ReturnProLayout>
-      )}
+          </div>
+        )}
+      </ReturnProLayout>
       
       <AuthModal
         isOpen={showAuthModal}

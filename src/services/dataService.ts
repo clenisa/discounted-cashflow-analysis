@@ -243,14 +243,20 @@ export class SupabaseDataService implements DataService {
   async listModels(): Promise<DCFModel[]> {
     const { data, error } = await this.supabaseClient
       .from('dcf_models')
-      .select('*')
+      .select(`
+        *,
+        dcf_scenarios(count)
+      `)
       .order('updated_at', { ascending: false });
 
     if (error) {
       throw error;
     }
 
-    return (data ?? []).map(this.mapDbModelToDCFModel);
+    return (data ?? []).map((model: any) => ({
+      ...this.mapDbModelToDCFModel(model),
+      scenarioCount: model.dcf_scenarios?.[0]?.count || 0
+    }));
   }
 
   async deleteModel(id: string): Promise<void> {

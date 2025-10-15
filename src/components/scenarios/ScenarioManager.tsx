@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useDataService } from '@/hooks/useDataService';
 import { useAuth } from '@/contexts/AuthContext';
+import { ScenarioForm } from './ScenarioForm';
 import type { DCFModel, DCFScenario, IncomeStatementData, IncomeStatementAdjustments } from '@/types/dcf';
 
 interface ScenarioManagerProps {
@@ -29,6 +30,8 @@ export const ScenarioManager: React.FC<ScenarioManagerProps> = ({
   const [activeModelId, setActiveModelId] = useState<string>(controlledModelId ?? '');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showCreateForm, setShowCreateForm] = useState(false);
+  const [editingScenario, setEditingScenario] = useState<DCFScenario | null>(null);
 
   const selectedModel = useMemo(
     () => models.find((model) => model.id === activeModelId) ?? null,
@@ -146,39 +149,30 @@ export const ScenarioManager: React.FC<ScenarioManagerProps> = ({
     return `${baseName} ${suffix}`;
   };
 
-  const handleCreateScenario = async () => {
-    if (!activeModelId) return;
-    
-    try {
-      setError(null);
+  const handleCreateScenario = () => {
+    setShowCreateForm(true);
+  };
 
-      const newScenario: Omit<DCFScenario, 'id'> = {
-        userId: user?.id,
-        modelId: activeModelId,
-        scenarioName: getUniqueScenarioName(),
-        description: '',
-        discountRate: selectedModel?.discountRate,
-        perpetuityRate: selectedModel?.perpetuityRate,
-        corporateTaxRate: selectedModel?.corporateTaxRate,
-        ebitdaData: getDefaultEbitdaData(),
-        incomeStatementData: cloneIncomeStatement(selectedModel?.incomeStatementData),
-        incomeStatementAdjustments: cloneIncomeStatementAdjustments(selectedModel?.incomeStatementAdjustments),
-        isBaseScenario: false,
-        sortOrder: scenarios.length
-      };
-      
-      const scenarioId = await dataService.saveScenario(newScenario as DCFScenario);
-      const savedScenario = await dataService.loadScenario(scenarioId);
-      
-      if (savedScenario) {
-        setScenarios(prev => [...prev, savedScenario]);
-        onScenarioSelect(savedScenario);
-      }
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to create scenario';
-      setError(message);
-      console.error('Error creating scenario:', err);
+  const handleEditScenario = (scenario: DCFScenario) => {
+    setEditingScenario(scenario);
+  };
+
+  const handleScenarioSubmit = (scenario: DCFScenario) => {
+    if (editingScenario) {
+      // Update existing scenario
+      setScenarios(prev => prev.map(s => s.id === scenario.id ? scenario : s));
+      setEditingScenario(null);
+    } else {
+      // Add new scenario
+      setScenarios(prev => [...prev, scenario]);
+      setShowCreateForm(false);
     }
+    onScenarioSelect(scenario);
+  };
+
+  const handleCancelForm = () => {
+    setShowCreateForm(false);
+    setEditingScenario(null);
   };
 
   const handleDeleteScenario = async (scenarioId: string) => {
@@ -252,6 +246,19 @@ export const ScenarioManager: React.FC<ScenarioManagerProps> = ({
               + New Scenario
             </button>
           </div>
+
+          {/* Scenario Form */}
+          {(showCreateForm || editingScenario) && selectedModel && (
+            <div className="mb-6">
+              <ScenarioForm
+                model={selectedModel}
+                scenario={editingScenario || undefined}
+                onSubmit={handleScenarioSubmit}
+                onCancel={handleCancelForm}
+                isEditing={!!editingScenario}
+              />
+            </div>
+          )}
           
           <div className="space-y-2">
             {scenarios.length === 0 ? (
@@ -300,7 +307,7 @@ export const ScenarioManager: React.FC<ScenarioManagerProps> = ({
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
-                            onScenarioEdit?.(scenario);
+                            handleEditScenario(scenario);
                           }}
                           className="p-1 text-gray-400 hover:text-blue-600 focus:outline-none"
                           title="Edit scenario"

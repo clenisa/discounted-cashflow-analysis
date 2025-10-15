@@ -14,30 +14,27 @@ interface UnifiedLayoutProps {
   showSidebar?: boolean;
 }
 
-const sections: Array<{ id: ReturnProSection; label: string; icon: React.ReactNode }> = [
-  {
-    id: 'dcf',
-    label: 'DCF Calculator',
-    icon: <Calculator size={18} />
-  },
-  {
-    id: 'financial-data',
-    label: 'Financial Data',
-    icon: <Database size={18} />
-  },
-  {
-    id: 'comparison',
-    label: 'Scenario Comparison',
-    icon: <GitCompare size={18} />
-  },
-  {
-    id: 'corporate-finance',
-    label: 'Corporate Finance',
-    icon: <Building2 size={18} />
+const getSections = (isAuthenticated: boolean): Array<{ id: ReturnProSection; label: string; icon: React.ReactNode }> => {
+  if (isAuthenticated) {
+    return [
+      {
+        id: 'corporate-finance',
+        label: 'Corporate Finance',
+        icon: <Building2 size={18} />
+      }
+    ];
   }
-];
+  
+  return [
+    {
+      id: 'corporate-finance',
+      label: 'Corporate Finance',
+      icon: <Building2 size={18} />
+    }
+  ];
+};
 
-export type ReturnProSection = 'dcf' | 'financial-data' | 'comparison' | 'corporate-finance';
+export type ReturnProSection = 'corporate-finance';
 
 export const UnifiedLayout: React.FC<UnifiedLayoutProps> = ({
   activeSection,
@@ -75,7 +72,7 @@ export const UnifiedLayout: React.FC<UnifiedLayoutProps> = ({
 
             {/* Navigation */}
             <nav className="flex-1 space-y-1 py-6">
-              {sections.map((section) => (
+              {getSections(!!user).map((section) => (
                 <NavItem
                   key={section.id}
                   icon={section.icon}
@@ -140,7 +137,7 @@ export const UnifiedLayout: React.FC<UnifiedLayoutProps> = ({
                   </button>
                 </div>
                 <nav className="space-y-1 py-6">
-                  {sections.map((section) => (
+                  {getSections(!!user).map((section) => (
                     <NavItem
                       key={section.id}
                       icon={section.icon}
@@ -199,7 +196,7 @@ export const UnifiedLayout: React.FC<UnifiedLayoutProps> = ({
                     onChange={(event) => onSectionChange(event.target.value as ReturnProSection)}
                     className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 shadow-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
                   >
-                    {sections.map((section) => (
+                    {getSections(!!user).map((section) => (
                       <option key={section.id} value={section.id}>
                         {section.label}
                       </option>

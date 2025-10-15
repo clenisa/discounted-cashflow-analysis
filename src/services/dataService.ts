@@ -1,5 +1,4 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
-import { supabase } from '@/lib/supabase';
 import type { 
   DCFModel, 
   DCFScenario, 
@@ -175,7 +174,7 @@ export class LocalDataService implements DataService {
 }
 
 export class SupabaseDataService implements DataService {
-  constructor(private readonly supabaseClient: SupabaseClient = supabase) {}
+  constructor(private readonly supabaseClient: SupabaseClient) {}
 
   // Model operations
   async saveModel(model: DCFModel): Promise<string> {

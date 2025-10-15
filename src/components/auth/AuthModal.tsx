@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { LoginForm } from './LoginForm';
 import { SignUpForm } from './SignUpForm';
 
@@ -14,6 +14,12 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   initialMode = 'login' 
 }) => {
   const [mode, setMode] = useState<'login' | 'signup'>(initialMode);
+
+  useEffect(() => {
+    if (isOpen) {
+      setMode(initialMode);
+    }
+  }, [initialMode, isOpen]);
 
   if (!isOpen) return null;
 

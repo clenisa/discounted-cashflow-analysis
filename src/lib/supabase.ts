@@ -1,21 +1,36 @@
-import { createClient } from '@supabase/supabase-js';
+import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 
-// Get Supabase URL and Anon Key from environment variables
+// Read Supabase credentials from environment variables
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-if (!supabaseUrl || !supabaseAnonKey) {
-  throw new Error('Missing Supabase environment variables. Please set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY');
+let supabaseClient: SupabaseClient | null = null;
+
+if (supabaseUrl && supabaseAnonKey) {
+  supabaseClient = createClient(supabaseUrl, supabaseAnonKey, {
+    auth: {
+      autoRefreshToken: true,
+      persistSession: true,
+      detectSessionInUrl: true
+    }
+  });
+} else if (typeof window !== 'undefined') {
+  // Surface configuration issues without crashing the entire app
+  // eslint-disable-next-line no-console
+  console.warn(
+    'Supabase environment variables are missing. Authentication features are disabled until VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY are configured.'
+  );
 }
 
-// Create Supabase client
-export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-  auth: {
-    autoRefreshToken: true,
-    persistSession: true,
-    detectSessionInUrl: true
+export const supabase = supabaseClient;
+export const isSupabaseConfigured = supabaseClient !== null;
+
+export const requireSupabaseClient = (): SupabaseClient => {
+  if (!supabaseClient) {
+    throw new Error('Supabase client is not configured.');
   }
-});
+  return supabaseClient;
+};
 
 // Database types for TypeScript
 export type Database = {

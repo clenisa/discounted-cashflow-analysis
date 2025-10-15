@@ -1,8 +1,13 @@
 import { useMemo } from 'react';
-import { SupabaseDataService } from '@/services/dataService';
-import { supabase } from '@/lib/supabase';
+import { SupabaseDataService, LocalDataService } from '@/services/dataService';
+import { supabase, isSupabaseConfigured } from '@/lib/supabase';
 
 export const useDataService = () => {
-  const dataService = useMemo(() => new SupabaseDataService(supabase), []);
-  return dataService;
+  return useMemo(() => {
+    if (isSupabaseConfigured && supabase) {
+      return new SupabaseDataService(supabase);
+    }
+
+    return new LocalDataService();
+  }, []);
 };

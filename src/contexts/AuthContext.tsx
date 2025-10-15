@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session, AuthError } from '@supabase/supabase-js';
-import { supabase } from '@/lib/supabase';
+import { supabase, isSupabaseConfigured } from '@/lib/supabase';
 
 interface AuthContextType {
   user: User | null;
@@ -31,10 +31,28 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
 
+  const createUnavailableAuthError = (action: string) => {
+    const message = `Supabase authentication is unavailable. Unable to ${action}.`;
+    if (typeof window !== 'undefined') {
+      // eslint-disable-next-line no-console
+      console.warn(message);
+    }
+    const error = new Error(message) as AuthError;
+    error.name = 'AuthUnavailableError';
+    return { error };
+  };
+
   useEffect(() => {
+    const client = supabase;
+
+    if (!isSupabaseConfigured || !client) {
+      setLoading(false);
+      return;
+    }
+
     // Get initial session
     const getInitialSession = async () => {
-      const { data: { session }, error } = await supabase.auth.getSession();
+      const { data: { session }, error } = await client.auth.getSession();
       if (error) {
         console.error('Error getting session:', error);
       } else {
@@ -47,7 +65,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     getInitialSession();
 
     // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+    const { data: { subscription } } = client.auth.onAuthStateChange(
       async (event, session) => {
         setSession(session);
         setUser(session?.user ?? null);
@@ -59,7 +77,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   }, []);
 
   const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({
+    const client = supabase;
+    if (!isSupabaseConfigured || !client) {
+      return createUnavailableAuthError('sign in');
+    }
+    const { error } = await client.auth.signInWithPassword({
       email,
       password,
     });
@@ -67,7 +89,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   const signUp = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signUp({
+    const client = supabase;
+    if (!isSupabaseConfigured || !client) {
+      return createUnavailableAuthError('sign up');
+    }
+    const { error } = await client.auth.signUp({
       email,
       password,
     });
@@ -75,12 +101,20 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   const signOut = async () => {
-    const { error } = await supabase.auth.signOut();
+    const client = supabase;
+    if (!isSupabaseConfigured || !client) {
+      return createUnavailableAuthError('sign out');
+    }
+    const { error } = await client.auth.signOut();
     return { error };
   };
 
   const resetPassword = async (email: string) => {
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    const client = supabase;
+    if (!isSupabaseConfigured || !client) {
+      return createUnavailableAuthError('reset password');
+    }
+    const { error } = await client.auth.resetPasswordForEmail(email, {
       redirectTo: `${window.location.origin}/reset-password`,
     });
     return { error };
